@@ -49,6 +49,7 @@ The worker should connect to Vault first, request database credentials, then use
    - Enable the database secrets engine.
    - Configure a Postgres connection using an admin/bootstrap Postgres credential.
    - Create one database role for the order worker.
+   - Verify the generated credential can query the demo database.
 
 3. Add local commands.
    - `make vault-init` to configure Vault.
@@ -107,6 +108,7 @@ make deploy
 make wait
 make db-init
 make vault-init
+make vault-test-db-creds
 ```
 
 Long-running terminals:
@@ -132,6 +134,7 @@ Milestone 2 is done when:
 - Vault runs in the `temporal-vault-demo` namespace.
 - Vault is reachable at `http://localhost:8200` through port-forwarding.
 - Vault database secrets engine is configured for the local Postgres service.
+- `make vault-test-db-creds` proves a dynamic Vault credential can query Postgres.
 - The worker fetches short-lived Postgres credentials from Vault.
 - `ORD-001` completes successfully.
 - Postgres confirms the order was fulfilled with payment and notification records.
@@ -155,3 +158,19 @@ Do not include yet:
 - `VAULT_TOKEN=root` should never be presented as production guidance.
 - The first dynamic DB role can be broad so we can isolate the Vault credential flow before adding least privilege.
 - The worker runs locally in Milestone 2, so Vault is accessed through port-forwarding. In later milestones, the worker may move into Kubernetes or use Kubernetes auth from a pod identity.
+
+## Progress
+
+Completed so far:
+
+- Vault runs in Kubernetes dev mode.
+- Vault is reachable locally through `make port-forward-vault`.
+- `make vault-init` enables and configures the database secrets engine.
+- `make vault-read-db-creds` returns a short-lived Postgres credential.
+- `make vault-test-db-creds` verifies a generated credential can query the `orders` table.
+
+Still remaining:
+
+- Add Python Vault integration with `hvac`.
+- Update the worker to use Vault-generated Postgres credentials.
+- Re-run `ORD-001` through the workflow using dynamic credentials.

@@ -33,6 +33,7 @@ make up
 make deploy
 make wait
 make db-init
+make vault-init
 ```
 
 Keep these long-running port-forwards open while using the local worker:
@@ -40,10 +41,11 @@ Keep these long-running port-forwards open while using the local worker:
 ```bash
 make port-forward-temporal
 make port-forward-postgres
+make port-forward-vault
 make port-forward-ui
 ```
 
-Alternatively, run all three in one terminal:
+Alternatively, run all four in one terminal:
 
 ```bash
 make port-forward
@@ -71,11 +73,16 @@ http://localhost:8080
 
 ```bash
 make status
+make vault-init
+make vault-read-db-creds
+make vault-test-db-creds
 make port-forward-temporal
 make port-forward-postgres
+make port-forward-vault
 make port-forward-ui
 make logs-temporal
 make logs-postgres
+make logs-vault
 make db-shell
 make down
 ```
@@ -103,6 +110,8 @@ inventory_reservations:  ORD-001 -> WIDGET-001 qty 1
 payments:                ORD-001 -> 19.99 SUCCESS
 notifications:           ORD-001 -> ORDER_FULFILLED SENT
 ```
+
+Milestone 2 has started. Vault now runs in Kubernetes, is reachable at `http://localhost:8200`, and can issue dynamic Postgres credentials for the broad `order-worker` role.
 
 ## Architecture
 

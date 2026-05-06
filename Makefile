@@ -13,8 +13,9 @@ POSTGRES_USER ?= temporal
 POSTGRES_PASSWORD ?= temporal
 VAULT_ADDR ?= http://localhost:8200
 VAULT_TOKEN ?= root
+VAULT_DB_ROLE ?= order-worker
 
-.PHONY: install up deploy wait db-init port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
+.PHONY: install up deploy wait db-init vault-init vault-read-db-creds vault-test-db-creds port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
 
 install:
 	uv sync --all-extras
@@ -39,6 +40,28 @@ db-init:
 	kubectl -n $(NAMESPACE) delete job/db-init --ignore-not-found
 	kubectl -n $(NAMESPACE) apply -f k8s/jobs/db-init.yaml
 	kubectl -n $(NAMESPACE) wait --for=condition=complete job/db-init --timeout=120s
+
+vault-init:
+	NAMESPACE=$(NAMESPACE) \
+	POSTGRES_DB=$(POSTGRES_DB) \
+	POSTGRES_USER=$(POSTGRES_USER) \
+	POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	bash scripts/vault-init.sh
+
+vault-read-db-creds:
+	NAMESPACE=$(NAMESPACE) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	bash scripts/vault-read-db-creds.sh
+
+vault-test-db-creds:
+	NAMESPACE=$(NAMESPACE) \
+	POSTGRES_DB=$(POSTGRES_DB) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	bash scripts/vault-test-db-creds.sh
 
 port-forward:
 	kubectl -n $(NAMESPACE) port-forward svc/temporal 7233:7233 & \
