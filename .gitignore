@@ -1,7 +1,27 @@
+# Codex/local agent metadata
+.codex/
+.codex-*/
+
+# Python
 .venv/
 .ruff_cache/
 .pytest_cache/
 __pycache__/
 *.pyc
 *.egg-info/
+
+# Local environment
 .env
+.env.*
+!.env.example
+
+# Test and coverage output
+.coverage
+coverage.xml
+htmlcov/
+
+# Local OS/editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
