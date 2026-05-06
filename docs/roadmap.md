@@ -1,6 +1,6 @@
 # Roadmap
 
-This project is a local-first demo of Temporal, Vault, Postgres, and Kubernetes.
+This project is a local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
 The demo story should build in layers:
 

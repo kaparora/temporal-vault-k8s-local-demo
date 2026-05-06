@@ -2,9 +2,17 @@
 
 ## Purpose
 
-Build a local-first demo of Temporal, Vault, Postgres, and Kubernetes that can run on a laptop or Mac.
+Build a local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
 This project is a fresh start inspired by the existing cloud demo in `../vault-temporal`, but it should be designed for local development from day one rather than directly ported.
+
+The demo narrative:
+
+1. Temporal orchestrates an order workflow.
+2. Vault protects the worker's database access with short-lived credentials.
+3. Vault Kubernetes auth removes static Vault tokens.
+4. Vault Transit protects sensitive workflow payloads.
+5. Least-privilege roles tighten each activity's database access.
 
 ## Collaboration Goal
 

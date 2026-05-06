@@ -1,6 +1,6 @@
 # Temporal Vault K8s Local Demo
 
-Local-first demo for Temporal, Postgres, Vault, and Kubernetes.
+Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
 Current status: Milestone 2 is complete.
 
@@ -8,6 +8,14 @@ The demo now shows a before/after Vault story:
 
 - before Vault: the worker uses static Postgres credentials
 - after Vault: the worker gets short-lived Postgres credentials from Vault's database secrets engine
+
+The full demo arc is:
+
+1. Temporal orchestrates an order workflow.
+2. Vault protects the worker's database access.
+3. Vault Kubernetes auth removes static Vault tokens.
+4. Vault Transit protects sensitive workflow payloads.
+5. Least-privilege roles tighten each activity's database access.
 
 ## Milestones
 
