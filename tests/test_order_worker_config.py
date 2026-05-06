@@ -19,3 +19,15 @@ def test_vault_db_credentials_can_be_enabled(monkeypatch) -> None:
     assert cfg.use_vault_db_creds is True
     assert cfg.db_credential_source == "vault"
     assert cfg.vault_db_role == "order-worker"
+
+
+def test_kubernetes_auth_can_be_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("VAULT_AUTH_METHOD", "kubernetes")
+    monkeypatch.setenv("VAULT_KUBERNETES_ROLE", "order-worker")
+    monkeypatch.setenv("VAULT_KUBERNETES_JWT_PATH", "/var/run/token")
+
+    cfg = OrderWorkerConfig.from_env()
+
+    assert cfg.vault_auth_method == "kubernetes"
+    assert cfg.vault_kubernetes_role == "order-worker"
+    assert cfg.vault_kubernetes_jwt_path == "/var/run/token"

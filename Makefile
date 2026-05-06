@@ -16,8 +16,11 @@ VAULT_TOKEN ?= root
 VAULT_DB_MOUNT ?= database
 VAULT_DB_ROLE ?= order-worker
 USE_VAULT_DB_CREDS ?= false
+WORKER_IMAGE ?= temporal-vault-order-worker:local
+VAULT_KUBERNETES_ROLE ?= order-worker
+WORKER_SERVICE_ACCOUNT ?= order-worker
 
-.PHONY: install up deploy wait db-init vault-init vault-read-db-creds vault-test-db-creds port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
+.PHONY: install up deploy wait db-init vault-deploy vault-init vault-enable-k8s-auth vault-read-db-creds vault-test-db-creds worker-image worker-load worker-deploy worker-k8s worker-k8s-restart port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger status logs-temporal logs-postgres logs-vault logs-worker db-shell lint test down
 
 install:
 	uv sync --all-extras
@@ -43,6 +46,11 @@ db-init:
 	kubectl -n $(NAMESPACE) apply -f k8s/jobs/db-init.yaml
 	kubectl -n $(NAMESPACE) wait --for=condition=complete job/db-init --timeout=120s
 
+vault-deploy:
+	kubectl apply -f k8s/vault.yaml
+	kubectl -n $(NAMESPACE) rollout status deployment/vault --timeout=120s
+	kubectl -n $(NAMESPACE) wait --for=condition=available deployment/vault --timeout=120s
+
 vault-init:
 	NAMESPACE=$(NAMESPACE) \
 	POSTGRES_DB=$(POSTGRES_DB) \
@@ -51,6 +59,14 @@ vault-init:
 	VAULT_TOKEN=$(VAULT_TOKEN) \
 	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
 	bash scripts/vault-init.sh
+
+vault-enable-k8s-auth:
+	NAMESPACE=$(NAMESPACE) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	VAULT_KUBERNETES_ROLE=$(VAULT_KUBERNETES_ROLE) \
+	WORKER_SERVICE_ACCOUNT=$(WORKER_SERVICE_ACCOUNT) \
+	bash scripts/vault-enable-k8s-auth.sh
 
 vault-read-db-creds:
 	NAMESPACE=$(NAMESPACE) \
@@ -103,6 +119,23 @@ worker:
 worker-vault:
 	USE_VAULT_DB_CREDS=true $(MAKE) worker
 
+worker-image:
+	docker build -t $(WORKER_IMAGE) .
+
+worker-load:
+	kind load docker-image $(WORKER_IMAGE) --name $(CLUSTER_NAME)
+
+worker-deploy:
+	kubectl apply -f k8s/order-worker.yaml
+	kubectl -n $(NAMESPACE) rollout restart deployment/order-worker
+	kubectl -n $(NAMESPACE) rollout status deployment/order-worker --timeout=120s
+
+worker-k8s: worker-image worker-load vault-deploy vault-init vault-enable-k8s-auth worker-deploy
+
+worker-k8s-restart:
+	kubectl -n $(NAMESPACE) rollout restart deployment/order-worker
+	kubectl -n $(NAMESPACE) rollout status deployment/order-worker --timeout=120s
+
 trigger:
 	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
 	TEMPORAL_NAMESPACE=$(TEMPORAL_NAMESPACE) \
@@ -120,6 +153,9 @@ logs-postgres:
 
 logs-vault:
 	kubectl -n $(NAMESPACE) logs deployment/vault
+
+logs-worker:
+	kubectl -n $(NAMESPACE) logs deployment/order-worker
 
 db-shell:
 	kubectl -n $(NAMESPACE) exec -it deployment/postgres -- psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)

@@ -70,9 +70,11 @@ Initial test orders:
 - Keep setup and teardown repeatable with `make` or scripts.
 - Add tests and linting earlier.
 
-## Proposed Milestones
+## Milestones
 
 ### Milestone 1: Local Temporal + Postgres
+
+Status: complete.
 
 Goal: prove the local workflow loop before adding Vault.
 
@@ -89,6 +91,8 @@ Vault is intentionally out of scope for Milestone 1.
 
 ### Milestone 2: Add Vault
 
+Status: complete.
+
 Goal: introduce Vault while keeping the first version simple.
 
 Expected outcome:
@@ -100,15 +104,21 @@ Expected outcome:
 
 ### Milestone 3: Kubernetes Auth
 
+Status: complete.
+
 Goal: remove static Vault worker credentials.
 
-Expected outcome:
+Outcome:
 
 - Configure Vault Kubernetes auth.
 - Bind the order worker service account to a Vault role.
 - Let the worker authenticate to Vault using its pod identity.
+- Run the order worker as a Kubernetes Deployment.
+- Keep Vault dynamic Postgres credentials working.
 
 ### Milestone 4: Vault Transit Payload Encryption
+
+Status: planned.
 
 Goal: protect sensitive workflow data from being stored in plaintext in Temporal history.
 
@@ -121,6 +131,8 @@ Expected outcome:
 
 ### Milestone 5: Least Privilege + Failure Scenarios
 
+Status: planned.
+
 Goal: restore the strongest security story from the cloud demo.
 
 Expected outcome:
@@ -131,6 +143,8 @@ Expected outcome:
 - Idempotent database writes for retried activities.
 
 ### Milestone 6: Polish
+
+Status: planned.
 
 Goal: make the project easy to demo and reset.
 

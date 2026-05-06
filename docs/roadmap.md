@@ -46,13 +46,13 @@ v-token-order-...
 
 Details: [Milestone 2](milestone-2.md)
 
-## Planned
-
 ### Milestone 3: Vault Kubernetes Auth
+
+Status: complete.
 
 Goal: remove the static `VAULT_TOKEN=root` worker authentication path.
 
-Expected outcome:
+Outcome:
 
 - Move the order worker into Kubernetes.
 - Give the order worker a dedicated Kubernetes service account.
@@ -61,6 +61,8 @@ Expected outcome:
 - Let the worker obtain a Vault token using Kubernetes auth.
 - Keep the dynamic Postgres credential flow working.
 
+Details: [Milestone 3](milestone-3.md)
+
 Why this comes next:
 
 ```text
@@ -68,6 +70,8 @@ Kubernetes identity -> Vault auth -> database credentials
 ```
 
 That same identity foundation can later authorize Transit encrypt/decrypt.
+
+## Planned
 
 ### Milestone 4: Vault Transit Payload Encryption
 

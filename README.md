@@ -2,12 +2,13 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: Milestone 2 is complete.
+Current status: Milestone 3 is complete.
 
-The demo now shows a before/after Vault story:
+The demo now shows the first two Vault security steps:
 
 - before Vault: the worker uses static Postgres credentials
 - after Vault: the worker gets short-lived Postgres credentials from Vault's database secrets engine
+- after Kubernetes auth: the worker runs in Kubernetes and authenticates to Vault with its ServiceAccount identity
 
 The full demo arc is:
 
@@ -22,6 +23,7 @@ The full demo arc is:
 - [Roadmap](docs/roadmap.md)
 - [Milestone 1: Local Temporal + Postgres](docs/milestone-1.md)
 - [Milestone 2: Add Vault](docs/milestone-2.md)
+- [Milestone 3: Vault Kubernetes Auth](docs/milestone-3.md)
 - [Blog outline](docs/blog-outline.md)
 
 ## Prerequisites
@@ -76,6 +78,14 @@ In a third terminal, trigger the happy-path order:
 make trigger ORDER_ID=ORD-001
 ```
 
+To run the Milestone 3 Kubernetes-auth worker instead of the local worker:
+
+```bash
+make worker-k8s
+make trigger ORDER_ID=ORD-001
+make logs-worker
+```
+
 Temporal UI is available at:
 
 ```text
@@ -98,6 +108,8 @@ make logs-postgres
 make logs-vault
 make worker
 make worker-vault
+make worker-k8s
+make logs-worker
 make db-shell
 make down
 ```
@@ -122,9 +134,10 @@ The before/after demo is:
 ```text
 make worker        -> db_credential_source=static
 make worker-vault  -> db_credential_source=vault
+make worker-k8s    -> db_credential_source=vault, vault_auth_method=kubernetes
 ```
 
-In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...`.
+In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...` for token auth and `v-kubernet-order-...` for Kubernetes auth.
 
 Before Vault:
 
@@ -141,11 +154,18 @@ make worker-vault
 make trigger ORDER_ID=ORD-001
 ```
 
-Completed milestone details are captured in [docs/milestone-1.md](docs/milestone-1.md) and [docs/milestone-2.md](docs/milestone-2.md).
+After Kubernetes auth:
+
+```bash
+make worker-k8s
+make trigger ORDER_ID=ORD-001
+make logs-worker
+```
+
+Completed milestone details are captured in [docs/milestone-1.md](docs/milestone-1.md), [docs/milestone-2.md](docs/milestone-2.md), and [docs/milestone-3.md](docs/milestone-3.md).
 
 Later milestones add:
 
-- Vault Kubernetes auth
 - Vault Transit payload encryption
 - per-activity least-privilege database roles
 - `ORD-002` out-of-stock failure
@@ -177,8 +197,8 @@ flowchart LR
     worker -->|"encrypts/decrypts payloads\nwith Transit"| vault
 ```
 
-Current status: Milestone 2 runs Temporal, Temporal UI, Postgres, and Vault in `kind`, but the trigger client and worker still run locally through port-forwarding. Milestone 3 moves the worker into Kubernetes and replaces `VAULT_TOKEN=root` with Vault Kubernetes auth.
+Current status: Milestone 3 moved the worker into Kubernetes and replaced the worker's `VAULT_TOKEN=root` runtime path with Vault Kubernetes auth. The trigger client still runs locally.
 
 ## Notes
 
-This is a local development demo, not a production deployment. Milestone 2 still uses Vault dev mode and a static root token for worker-to-Vault authentication. Milestone 3 replaces that with Vault Kubernetes auth.
+This is a local development demo, not a production deployment. Vault still runs in dev mode, and setup scripts still use the root token to configure Vault. The Milestone 3 worker runtime uses Vault Kubernetes auth instead of the root token.

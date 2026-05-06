@@ -11,7 +11,10 @@ class OrderWorkerConfig:
     postgres_password: str
     use_vault_db_creds: bool
     vault_addr: str
+    vault_auth_method: str
     vault_token: str
+    vault_kubernetes_role: str
+    vault_kubernetes_jwt_path: str
     vault_db_mount: str
     vault_db_role: str
 
@@ -32,7 +35,13 @@ class OrderWorkerConfig:
             use_vault_db_creds=os.getenv("USE_VAULT_DB_CREDS", "false").lower()
             in {"1", "true", "yes"},
             vault_addr=os.getenv("VAULT_ADDR", "http://localhost:8200"),
+            vault_auth_method=os.getenv("VAULT_AUTH_METHOD", "token"),
             vault_token=os.getenv("VAULT_TOKEN", "root"),
+            vault_kubernetes_role=os.getenv("VAULT_KUBERNETES_ROLE", "order-worker"),
+            vault_kubernetes_jwt_path=os.getenv(
+                "VAULT_KUBERNETES_JWT_PATH",
+                "/var/run/secrets/kubernetes.io/serviceaccount/token",
+            ),
             vault_db_mount=os.getenv("VAULT_DB_MOUNT", "database"),
             vault_db_role=os.getenv("VAULT_DB_ROLE", "order-worker"),
         )

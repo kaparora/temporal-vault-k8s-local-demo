@@ -24,6 +24,7 @@ async def main() -> None:
         task_queue=task_queue,
         db_credential_source=cfg.db_credential_source,
         vault_db_role=cfg.vault_db_role if cfg.use_vault_db_creds else None,
+        vault_auth_method=cfg.vault_auth_method if cfg.use_vault_db_creds else None,
     )
     worker = Worker(
         temporal_client,
