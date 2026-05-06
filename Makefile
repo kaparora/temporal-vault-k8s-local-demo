@@ -11,8 +11,10 @@ POSTGRES_PORT ?= 5432
 POSTGRES_DB ?= temporal
 POSTGRES_USER ?= temporal
 POSTGRES_PASSWORD ?= temporal
+VAULT_ADDR ?= http://localhost:8200
+VAULT_TOKEN ?= root
 
-.PHONY: install up deploy wait db-init port-forward port-forward-temporal port-forward-ui port-forward-postgres worker trigger status logs-temporal logs-postgres db-shell lint test down
+.PHONY: install up deploy wait db-init port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
 
 install:
 	uv sync --all-extras
@@ -25,11 +27,13 @@ deploy:
 	kubectl apply -f k8s/postgres.yaml
 	kubectl apply -f k8s/temporal.yaml
 	kubectl apply -f k8s/temporal-ui.yaml
+	kubectl apply -f k8s/vault.yaml
 
 wait:
 	kubectl -n $(NAMESPACE) wait --for=condition=available deployment/postgres --timeout=180s
 	kubectl -n $(NAMESPACE) wait --for=condition=available deployment/temporal --timeout=240s
 	kubectl -n $(NAMESPACE) wait --for=condition=available deployment/temporal-ui --timeout=180s
+	kubectl -n $(NAMESPACE) wait --for=condition=available deployment/vault --timeout=180s
 
 db-init:
 	kubectl -n $(NAMESPACE) delete job/db-init --ignore-not-found
@@ -40,6 +44,7 @@ port-forward:
 	kubectl -n $(NAMESPACE) port-forward svc/temporal 7233:7233 & \
 	kubectl -n $(NAMESPACE) port-forward svc/temporal-ui 8080:8080 & \
 	kubectl -n $(NAMESPACE) port-forward svc/postgres 5432:5432 & \
+	kubectl -n $(NAMESPACE) port-forward svc/vault 8200:8200 & \
 	wait
 
 port-forward-temporal:
@@ -50,6 +55,9 @@ port-forward-ui:
 
 port-forward-postgres:
 	kubectl -n $(NAMESPACE) port-forward svc/postgres 5432:5432
+
+port-forward-vault:
+	kubectl -n $(NAMESPACE) port-forward svc/vault 8200:8200
 
 worker:
 	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
@@ -76,6 +84,9 @@ logs-temporal:
 
 logs-postgres:
 	kubectl -n $(NAMESPACE) logs deployment/postgres
+
+logs-vault:
+	kubectl -n $(NAMESPACE) logs deployment/vault
 
 db-shell:
 	kubectl -n $(NAMESPACE) exec -it deployment/postgres -- psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
