@@ -10,7 +10,7 @@ Milestone 1 proves the workflow loop before Vault is added:
 - run a Python Temporal worker from your laptop
 - trigger `ORD-001` from a Python client
 
-Vault is intentionally out of scope for Milestone 1. It starts in Milestone 2.
+Milestone 2 adds Vault database secrets while keeping the original static-credential path for comparison.
 
 ## Milestones
 
@@ -51,13 +51,13 @@ Alternatively, run all four in one terminal:
 make port-forward
 ```
 
-In another terminal, start the worker.
+In another terminal, start the before-Vault worker with static database credentials:
 
 ```bash
 make worker
 ```
 
-For the after-Vault demo, start the worker with dynamic database credentials:
+Or start the after-Vault worker with dynamic database credentials:
 
 ```bash
 make worker-vault
@@ -119,7 +119,7 @@ payments:                ORD-001 -> 19.99 SUCCESS
 notifications:           ORD-001 -> ORDER_FULFILLED SENT
 ```
 
-Milestone 2 has started. Vault now runs in Kubernetes, is reachable at `http://localhost:8200`, and can issue dynamic Postgres credentials for the broad `order-worker` role.
+Milestone 2 is complete. Vault now runs in Kubernetes, is reachable at `http://localhost:8200`, and issues dynamic Postgres credentials for the broad `order-worker` role.
 
 The before/after demo is:
 
@@ -129,6 +129,21 @@ make worker-vault  -> db_credential_source=vault
 ```
 
 In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...`.
+
+Before Vault:
+
+```bash
+make worker
+make trigger ORDER_ID=ORD-001
+```
+
+After Vault:
+
+```bash
+make vault-init
+make worker-vault
+make trigger ORDER_ID=ORD-001
+```
 
 ## Architecture
 

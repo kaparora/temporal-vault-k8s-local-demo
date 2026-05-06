@@ -4,6 +4,8 @@
 
 Introduce Vault into the local Kubernetes stack while keeping the order workflow behavior unchanged.
 
+Status: complete.
+
 Milestone 2 proves one new thing:
 
 ```text
@@ -38,7 +40,7 @@ flowchart LR
 
 The worker should connect to Vault first, request database credentials, then use those credentials for Postgres activity writes.
 
-## Implementation Plan
+## Implementation Summary
 
 1. Run Vault in Kubernetes.
    - Add a Vault deployment and service.
@@ -128,9 +130,9 @@ make worker-vault
 make trigger ORDER_ID=ORD-001
 ```
 
-## Definition Of Done
+## Verification
 
-Milestone 2 is done when:
+Milestone 2 is complete:
 
 - Vault runs in the `temporal-vault-demo` namespace.
 - Vault is reachable at `http://localhost:8200` through port-forwarding.
@@ -141,6 +143,13 @@ Milestone 2 is done when:
 - Postgres confirms the order was fulfilled with payment and notification records.
 - README documents the new Vault commands.
 - The docs clearly state what remains non-production-ready.
+
+The key worker log evidence is:
+
+```text
+starting_order_worker db_credential_source=vault
+using_vault_db_credentials db_username=v-token-order-...
+```
 
 ## Non-Scope
 
@@ -160,9 +169,7 @@ Do not include yet:
 - The first dynamic DB role can be broad so we can isolate the Vault credential flow before adding least privilege.
 - The worker runs locally in Milestone 2, so Vault is accessed through port-forwarding. In later milestones, the worker may move into Kubernetes or use Kubernetes auth from a pod identity.
 
-## Progress
-
-Completed so far:
+## Completed
 
 - Vault runs in Kubernetes dev mode.
 - Vault is reachable locally through `make port-forward-vault`.
@@ -173,7 +180,7 @@ Completed so far:
 - `ORD-001` completes successfully through a Vault-backed worker.
 - The worker logs generated Postgres usernames such as `v-token-order-...`.
 
-Still remaining:
+## Future Improvements
 
-- Add a final README walkthrough for the before/after demo.
 - Decide whether to keep one generated credential per activity connection or cache a credential briefly inside the worker.
+- Move from the static root token to Vault Kubernetes auth in Milestone 3.
