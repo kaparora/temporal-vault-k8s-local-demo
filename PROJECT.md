@@ -144,6 +144,17 @@ Expected outcome:
 - README diagrams
 - Troubleshooting notes
 
+### Milestone 7: Blog + Video
+
+Goal: turn the completed local demo into a public walkthrough.
+
+Expected outcome:
+
+- Publish a blog post explaining the architecture and demo arc.
+- Record a video walkthrough showing the before/after Vault story.
+- Include diagrams, commands, and clear caveats.
+- Link to the GitHub repository.
+
 ### Future Scope: Vault PKI + Temporal mTLS
 
 Goal: use Vault-issued certificates for Temporal worker/client authentication.

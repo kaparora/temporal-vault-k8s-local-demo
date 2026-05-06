@@ -22,6 +22,7 @@ The full demo arc is:
 - [Roadmap](docs/roadmap.md)
 - [Milestone 1: Local Temporal + Postgres](docs/milestone-1.md)
 - [Milestone 2: Add Vault](docs/milestone-2.md)
+- [Blog outline](docs/blog-outline.md)
 
 ## Prerequisites
 

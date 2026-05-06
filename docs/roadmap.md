@@ -122,6 +122,19 @@ Expected outcome:
 - Troubleshooting notes.
 - Clear production caveats.
 
+### Milestone 7: Blog + Video
+
+Goal: turn the completed local demo into a public walkthrough.
+
+Expected outcome:
+
+- Publish a blog post with the architecture, demo narrative, commands, and caveats.
+- Record a video walkthrough showing the demo in Temporal UI, Vault UI, worker logs, and Postgres.
+- Explain why this topic matters and what production hardening remains.
+- Link to the GitHub repository.
+
+Working outline: [Blog outline](blog-outline.md)
+
 ## Future Scope
 
 ### Vault PKI + Temporal mTLS
