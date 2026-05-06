@@ -12,6 +12,11 @@ Milestone 1 proves the workflow loop before Vault is added:
 
 Vault is intentionally out of scope for Milestone 1. It starts in Milestone 2.
 
+## Milestones
+
+- [Milestone 1: Local Temporal + Postgres](docs/milestone-1.md)
+- [Milestone 2: Add Vault](docs/milestone-2.md)
+
 ## Prerequisites
 
 - Docker
@@ -30,13 +35,21 @@ make wait
 make db-init
 ```
 
-In one terminal, keep port forwarding open:
+Keep these long-running port-forwards open while using the local worker:
+
+```bash
+make port-forward-temporal
+make port-forward-postgres
+make port-forward-ui
+```
+
+Alternatively, run all three in one terminal:
 
 ```bash
 make port-forward
 ```
 
-In another terminal, start the worker:
+In another terminal, start the worker.
 
 ```bash
 make worker
@@ -58,6 +71,9 @@ http://localhost:8080
 
 ```bash
 make status
+make port-forward-temporal
+make port-forward-postgres
+make port-forward-ui
 make logs-temporal
 make logs-postgres
 make db-shell
@@ -78,6 +94,15 @@ Later milestones add:
 - per-activity least-privilege database roles
 - `ORD-002` out-of-stock failure
 - `ORD-003` payment failure with compensation
+
+Milestone 1 has been verified locally. The completed run left:
+
+```text
+orders:                  ORD-001 -> FULFILLED
+inventory_reservations:  ORD-001 -> WIDGET-001 qty 1
+payments:                ORD-001 -> 19.99 SUCCESS
+notifications:           ORD-001 -> ORDER_FULFILLED SENT
+```
 
 ## Architecture
 
