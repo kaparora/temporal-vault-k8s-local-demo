@@ -2,15 +2,12 @@
 
 Local-first demo for Temporal, Postgres, Vault, and Kubernetes.
 
-Milestone 1 proves the workflow loop before Vault is added:
+Current status: Milestone 2 is complete.
 
-- create a local `kind` cluster
-- run Postgres in Kubernetes
-- run Temporal and Temporal UI in Kubernetes
-- run a Python Temporal worker from your laptop
-- trigger `ORD-001` from a Python client
+The demo now shows a before/after Vault story:
 
-Milestone 2 adds Vault database secrets while keeping the original static-credential path for comparison.
+- before Vault: the worker uses static Postgres credentials
+- after Vault: the worker gets short-lived Postgres credentials from Vault's database secrets engine
 
 ## Milestones
 
@@ -96,22 +93,13 @@ make db-shell
 make down
 ```
 
-## Milestone 1 Scope
+## Current Demo
 
-This milestone includes only the happy path:
+The current workflow supports the `ORD-001` happy path:
 
 - `ORD-001`: validates, reserves inventory, processes payment, marks fulfilled, sends notification
 
-Later milestones add:
-
-- Vault Kubernetes auth
-- Vault Transit payload encryption
-- per-activity least-privilege database roles
-- `ORD-002` out-of-stock failure
-- `ORD-003` payment failure with compensation
-- future Vault PKI + Temporal mTLS
-
-Milestone 1 has been verified locally. The completed run left:
+Successful runs leave this database state:
 
 ```text
 orders:                  ORD-001 -> FULFILLED
@@ -119,8 +107,6 @@ inventory_reservations:  ORD-001 -> WIDGET-001 qty 1
 payments:                ORD-001 -> 19.99 SUCCESS
 notifications:           ORD-001 -> ORDER_FULFILLED SENT
 ```
-
-Milestone 2 is complete. Vault now runs in Kubernetes, is reachable at `http://localhost:8200`, and issues dynamic Postgres credentials for the broad `order-worker` role.
 
 The before/after demo is:
 
@@ -145,6 +131,17 @@ make vault-init
 make worker-vault
 make trigger ORDER_ID=ORD-001
 ```
+
+Completed milestone details are captured in [docs/milestone-1.md](docs/milestone-1.md) and [docs/milestone-2.md](docs/milestone-2.md).
+
+Later milestones add:
+
+- Vault Kubernetes auth
+- Vault Transit payload encryption
+- per-activity least-privilege database roles
+- `ORD-002` out-of-stock failure
+- `ORD-003` payment failure with compensation
+- future Vault PKI + Temporal mTLS
 
 ## Target Architecture
 
@@ -175,4 +172,4 @@ Current status: Milestone 2 runs Temporal, Temporal UI, Postgres, and Vault in `
 
 ## Notes
 
-This is a local development demo, not a production deployment. Credentials are static in Milestone 1 so the Temporal and database loop is easy to inspect. Vault replaces that in later milestones.
+This is a local development demo, not a production deployment. Milestone 2 still uses Vault dev mode and a static root token for worker-to-Vault authentication. Milestone 3 replaces that with Vault Kubernetes auth.
