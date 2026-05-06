@@ -54,7 +54,8 @@ Goal: remove the static `VAULT_TOKEN=root` worker authentication path.
 
 Expected outcome:
 
-- Run the order worker in Kubernetes or otherwise give it a Kubernetes service account identity.
+- Move the order worker into Kubernetes.
+- Give the order worker a dedicated Kubernetes service account.
 - Configure Vault Kubernetes auth.
 - Bind the worker service account to a Vault role.
 - Let the worker obtain a Vault token using Kubernetes auth.

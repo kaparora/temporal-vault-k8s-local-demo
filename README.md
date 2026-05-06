@@ -146,15 +146,32 @@ make worker-vault
 make trigger ORDER_ID=ORD-001
 ```
 
-## Architecture
+## Target Architecture
 
 ```mermaid
 flowchart LR
-    client["Python trigger client"] --> temporal["Temporal Server\nKubernetes"]
-    worker["Python order worker\nlocal process"] --> temporal
-    worker --> postgres["Postgres\nKubernetes"]
-    temporalui["Temporal UI\nKubernetes"] --> temporal
+    client["Trigger Client"] -->|"starts order workflow"| temporal
+
+    subgraph k8s["kind Kubernetes cluster"]
+        temporal["Temporal Server\norchestration + history"]
+        ui["Temporal UI"]
+        worker["Order Worker Pod\nKubernetes ServiceAccount"]
+        vault["Vault\nKubernetes Auth + DB Secrets + Transit"]
+        postgres["Postgres\norders database"]
+    end
+
+    worker -->|"polls task queue"| temporal
+    ui -->|"views workflow history"| temporal
+
+    worker -->|"authenticates with\nServiceAccount JWT"| vault
+    vault -->|"issues Vault token"| worker
+    worker -->|"reads database/creds/<role>"| vault
+    vault -->|"creates short-lived\nPostgres user"| postgres
+    worker -->|"connects with dynamic creds"| postgres
+    worker -->|"encrypts/decrypts payloads\nwith Transit"| vault
 ```
+
+Current status: Milestone 2 runs Temporal, Temporal UI, Postgres, and Vault in `kind`, but the trigger client and worker still run locally through port-forwarding. Milestone 3 moves the worker into Kubernetes and replaces `VAULT_TOKEN=root` with Vault Kubernetes auth.
 
 ## Notes
 
