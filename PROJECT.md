@@ -24,6 +24,8 @@ Eventually, the local stack should include:
 - A Python client to trigger demo workflows
 - Vault Kubernetes auth for worker identity
 - Vault database secrets engine for short-lived Postgres credentials
+- Vault Transit for workflow payload encryption
+- Future: Vault PKI for Temporal mTLS certificates
 
 ## Demo Story
 
@@ -98,7 +100,18 @@ Expected outcome:
 - Bind the order worker service account to a Vault role.
 - Let the worker authenticate to Vault using its pod identity.
 
-### Milestone 4: Least Privilege + Failure Scenarios
+### Milestone 4: Vault Transit Payload Encryption
+
+Goal: protect sensitive workflow data from being stored in plaintext in Temporal history.
+
+Expected outcome:
+
+- Enrich the order payload with realistic sensitive fields.
+- Configure Vault Transit.
+- Encrypt/decrypt workflow payloads through a Vault-backed payload codec.
+- Show the before/after in Temporal UI or workflow history.
+
+### Milestone 5: Least Privilege + Failure Scenarios
 
 Goal: restore the strongest security story from the cloud demo.
 
@@ -109,7 +122,7 @@ Expected outcome:
 - `ORD-003` payment failure with compensation.
 - Idempotent database writes for retried activities.
 
-### Milestone 5: Polish
+### Milestone 6: Polish
 
 Goal: make the project easy to demo and reset.
 
@@ -123,6 +136,19 @@ Expected outcome:
 - README diagrams
 - Troubleshooting notes
 
+### Future Scope: Vault PKI + Temporal mTLS
+
+Goal: use Vault-issued certificates for Temporal worker/client authentication.
+
+Expected outcome:
+
+- Configure Vault PKI.
+- Configure Temporal frontend TLS/mTLS.
+- Issue worker/client certificates through Vault.
+- Explore certificate renewal or rotation.
+
+This is deliberately after the database credential, Kubernetes auth, Transit, and least-privilege stories.
+
 ## Working Style
 
 Codex should:
@@ -133,4 +159,3 @@ Codex should:
 - Prefer local repeatability over cleverness.
 - Verify each milestone with real commands.
 - Keep the old cloud demo as a reference, not a template to copy blindly.
-

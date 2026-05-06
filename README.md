@@ -14,6 +14,7 @@ Milestone 2 adds Vault database secrets while keeping the original static-creden
 
 ## Milestones
 
+- [Roadmap](docs/roadmap.md)
 - [Milestone 1: Local Temporal + Postgres](docs/milestone-1.md)
 - [Milestone 2: Add Vault](docs/milestone-2.md)
 
@@ -103,12 +104,12 @@ This milestone includes only the happy path:
 
 Later milestones add:
 
-- Vault in Kubernetes
-- dynamic Postgres credentials
 - Vault Kubernetes auth
+- Vault Transit payload encryption
 - per-activity least-privilege database roles
 - `ORD-002` out-of-stock failure
 - `ORD-003` payment failure with compensation
+- future Vault PKI + Temporal mTLS
 
 Milestone 1 has been verified locally. The completed run left:
 
