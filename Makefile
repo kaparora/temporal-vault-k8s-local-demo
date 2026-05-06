@@ -13,9 +13,11 @@ POSTGRES_USER ?= temporal
 POSTGRES_PASSWORD ?= temporal
 VAULT_ADDR ?= http://localhost:8200
 VAULT_TOKEN ?= root
+VAULT_DB_MOUNT ?= database
 VAULT_DB_ROLE ?= order-worker
+USE_VAULT_DB_CREDS ?= false
 
-.PHONY: install up deploy wait db-init vault-init vault-read-db-creds vault-test-db-creds port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
+.PHONY: install up deploy wait db-init vault-init vault-read-db-creds vault-test-db-creds port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger status logs-temporal logs-postgres logs-vault db-shell lint test down
 
 install:
 	uv sync --all-extras
@@ -91,7 +93,15 @@ worker:
 	POSTGRES_DB=$(POSTGRES_DB) \
 	POSTGRES_USER=$(POSTGRES_USER) \
 	POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	USE_VAULT_DB_CREDS=$(USE_VAULT_DB_CREDS) \
+	VAULT_ADDR=$(VAULT_ADDR) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_MOUNT=$(VAULT_DB_MOUNT) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
 	uv run python -m order_demo.workers.order_worker.main
+
+worker-vault:
+	USE_VAULT_DB_CREDS=true $(MAKE) worker
 
 trigger:
 	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \

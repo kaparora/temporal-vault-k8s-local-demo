@@ -19,7 +19,12 @@ async def main() -> None:
     task_queue = os.getenv("ORDERS_TASK_QUEUE", "orders-tq")
     activities = OrderActivities(cfg)
 
-    logger.info("starting_order_worker", task_queue=task_queue)
+    logger.info(
+        "starting_order_worker",
+        task_queue=task_queue,
+        db_credential_source=cfg.db_credential_source,
+        vault_db_role=cfg.vault_db_role if cfg.use_vault_db_creds else None,
+    )
     worker = Worker(
         temporal_client,
         task_queue=task_queue,

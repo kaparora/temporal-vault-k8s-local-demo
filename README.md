@@ -57,6 +57,12 @@ In another terminal, start the worker.
 make worker
 ```
 
+For the after-Vault demo, start the worker with dynamic database credentials:
+
+```bash
+make worker-vault
+```
+
 In a third terminal, trigger the happy-path order:
 
 ```bash
@@ -83,6 +89,8 @@ make port-forward-ui
 make logs-temporal
 make logs-postgres
 make logs-vault
+make worker
+make worker-vault
 make db-shell
 make down
 ```
@@ -112,6 +120,15 @@ notifications:           ORD-001 -> ORDER_FULFILLED SENT
 ```
 
 Milestone 2 has started. Vault now runs in Kubernetes, is reachable at `http://localhost:8200`, and can issue dynamic Postgres credentials for the broad `order-worker` role.
+
+The before/after demo is:
+
+```text
+make worker        -> db_credential_source=static
+make worker-vault  -> db_credential_source=vault
+```
+
+In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...`.
 
 ## Architecture
 

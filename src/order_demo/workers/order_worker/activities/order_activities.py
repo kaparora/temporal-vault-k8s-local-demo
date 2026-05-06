@@ -1,8 +1,12 @@
 from dataclasses import dataclass
 import asyncpg
+import structlog
 from temporalio import activity
 
 from order_demo.workers.order_worker.config import OrderWorkerConfig
+from order_demo.workers.order_worker.vault_client import VaultDbCredentialsClient
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -22,13 +26,26 @@ class ValidateOrderResult:
 class OrderActivities:
     def __init__(self, cfg: OrderWorkerConfig):
         self.cfg = cfg
+        self.vault_client = VaultDbCredentialsClient(cfg)
 
     async def _connect(self) -> asyncpg.Connection:
+        username = self.cfg.postgres_user
+        password = self.cfg.postgres_password
+        if self.cfg.use_vault_db_creds:
+            creds = self.vault_client.generate_credentials()
+            username = creds.username
+            password = creds.password
+            logger.info(
+                "using_vault_db_credentials",
+                vault_db_role=self.cfg.vault_db_role,
+                db_username=username,
+            )
+
         return await asyncpg.connect(
             host=self.cfg.postgres_host,
             port=self.cfg.postgres_port,
-            user=self.cfg.postgres_user,
-            password=self.cfg.postgres_password,
+            user=username,
+            password=password,
             database=self.cfg.postgres_db,
         )
 

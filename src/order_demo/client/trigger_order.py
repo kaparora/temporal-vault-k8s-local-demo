@@ -3,6 +3,7 @@ import os
 import sys
 
 import structlog
+from temporalio.common import WorkflowIDReusePolicy
 
 from order_demo.workers.common.temporal_client import connect_temporal_client
 from order_demo.workers.order_worker.workflows.order_fulfillment import (
@@ -29,6 +30,7 @@ async def main() -> None:
         OrderFulfillmentInput(order_id=order_id),
         id=f"order-fulfillment-{order_id}",
         task_queue=task_queue,
+        id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE,
     )
     logger.info("order_completed", result=result)
 

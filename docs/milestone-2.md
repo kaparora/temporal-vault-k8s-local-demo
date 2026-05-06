@@ -124,6 +124,7 @@ Worker and trigger:
 
 ```bash
 make worker
+make worker-vault
 make trigger ORDER_ID=ORD-001
 ```
 
@@ -168,9 +169,11 @@ Completed so far:
 - `make vault-init` enables and configures the database secrets engine.
 - `make vault-read-db-creds` returns a short-lived Postgres credential.
 - `make vault-test-db-creds` verifies a generated credential can query the `orders` table.
+- `make worker-vault` runs the order worker with `db_credential_source=vault`.
+- `ORD-001` completes successfully through a Vault-backed worker.
+- The worker logs generated Postgres usernames such as `v-token-order-...`.
 
 Still remaining:
 
-- Add Python Vault integration with `hvac`.
-- Update the worker to use Vault-generated Postgres credentials.
-- Re-run `ORD-001` through the workflow using dynamic credentials.
+- Add a final README walkthrough for the before/after demo.
+- Decide whether to keep one generated credential per activity connection or cache a credential briefly inside the worker.
