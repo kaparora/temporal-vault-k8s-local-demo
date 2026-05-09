@@ -15,12 +15,15 @@ VAULT_ADDR ?= http://localhost:8200
 VAULT_TOKEN ?= root
 VAULT_DB_MOUNT ?= database
 VAULT_DB_ROLE ?= order-worker
+VAULT_TRANSIT_MOUNT ?= transit
+VAULT_TRANSIT_KEY ?= temporal-payloads
 USE_VAULT_DB_CREDS ?= false
+USE_VAULT_PAYLOAD_CODEC ?= false
 WORKER_IMAGE ?= temporal-vault-order-worker:local
 VAULT_KUBERNETES_ROLE ?= order-worker
 WORKER_SERVICE_ACCOUNT ?= order-worker
 
-.PHONY: install up deploy wait db-init vault-deploy vault-init vault-enable-k8s-auth vault-read-db-creds vault-test-db-creds worker-image worker-load worker-deploy worker-k8s worker-k8s-restart port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger status logs-temporal logs-postgres logs-vault logs-worker db-shell lint test down
+.PHONY: install up deploy wait db-init vault-deploy vault-init vault-init-transit vault-enable-k8s-auth vault-read-db-creds vault-test-db-creds worker-image worker-load worker-deploy worker-k8s worker-k8s-transit worker-enable-transit worker-disable-transit worker-k8s-restart port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger trigger-transit status logs-temporal logs-postgres logs-vault logs-worker db-shell lint test down
 
 install:
 	uv sync --all-extras
@@ -60,10 +63,19 @@ vault-init:
 	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
 	bash scripts/vault-init.sh
 
+vault-init-transit:
+	NAMESPACE=$(NAMESPACE) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
+	bash scripts/vault-init-transit.sh
+
 vault-enable-k8s-auth:
 	NAMESPACE=$(NAMESPACE) \
 	VAULT_TOKEN=$(VAULT_TOKEN) \
 	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
 	VAULT_KUBERNETES_ROLE=$(VAULT_KUBERNETES_ROLE) \
 	WORKER_SERVICE_ACCOUNT=$(WORKER_SERVICE_ACCOUNT) \
 	bash scripts/vault-enable-k8s-auth.sh
@@ -110,10 +122,13 @@ worker:
 	POSTGRES_USER=$(POSTGRES_USER) \
 	POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
 	USE_VAULT_DB_CREDS=$(USE_VAULT_DB_CREDS) \
+	USE_VAULT_PAYLOAD_CODEC=$(USE_VAULT_PAYLOAD_CODEC) \
 	VAULT_ADDR=$(VAULT_ADDR) \
 	VAULT_TOKEN=$(VAULT_TOKEN) \
 	VAULT_DB_MOUNT=$(VAULT_DB_MOUNT) \
 	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
 	uv run python -m order_demo.workers.order_worker.main
 
 worker-vault:
@@ -132,6 +147,22 @@ worker-deploy:
 
 worker-k8s: worker-image worker-load vault-deploy vault-init vault-enable-k8s-auth worker-deploy
 
+worker-k8s-transit: worker-image worker-load vault-deploy vault-init vault-init-transit vault-enable-k8s-auth worker-deploy worker-enable-transit
+
+worker-enable-transit:
+	NAMESPACE=$(NAMESPACE) \
+	USE_VAULT_PAYLOAD_CODEC=true \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
+	bash scripts/worker-set-transit.sh
+
+worker-disable-transit:
+	NAMESPACE=$(NAMESPACE) \
+	USE_VAULT_PAYLOAD_CODEC=false \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
+	bash scripts/worker-set-transit.sh
+
 worker-k8s-restart:
 	kubectl -n $(NAMESPACE) rollout restart deployment/order-worker
 	kubectl -n $(NAMESPACE) rollout status deployment/order-worker --timeout=120s
@@ -140,7 +171,18 @@ trigger:
 	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
 	TEMPORAL_NAMESPACE=$(TEMPORAL_NAMESPACE) \
 	ORDERS_TASK_QUEUE=$(ORDERS_TASK_QUEUE) \
+	USE_VAULT_PAYLOAD_CODEC=$(USE_VAULT_PAYLOAD_CODEC) \
+	VAULT_ADDR=$(VAULT_ADDR) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
 	uv run python -m order_demo.client.trigger_order $(ORDER_ID)
+
+trigger-transit:
+	USE_VAULT_PAYLOAD_CODEC=true $(MAKE) trigger
+
+trigger-transit-disabled:
+	USE_VAULT_PAYLOAD_CODEC=false $(MAKE) trigger
 
 status:
 	kubectl -n $(NAMESPACE) get pods,svc,jobs

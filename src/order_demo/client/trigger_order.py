@@ -25,9 +25,17 @@ async def main() -> None:
     task_queue = os.getenv("ORDERS_TASK_QUEUE", "orders-tq")
 
     logger.info("triggering_order", order_id=order_id, task_queue=task_queue)
+    workflow_input = OrderFulfillmentInput(
+        order_id=order_id,
+        customer_name=os.getenv("DEMO_CUSTOMER_NAME", "Avery Stone"),
+        customer_email=os.getenv("DEMO_CUSTOMER_EMAIL", "avery.stone@example.com"),
+        shipping_address=os.getenv("DEMO_SHIPPING_ADDRESS", "42 Market Street, Berlin"),
+        payment_token=os.getenv("DEMO_PAYMENT_TOKEN", "tok_demo_visa_4242_sensitive"),
+    )
+
     result = await temporal_client.execute_workflow(
         OrderFulfillmentWorkflow.run,
-        OrderFulfillmentInput(order_id=order_id),
+        workflow_input,
         id=f"order-fulfillment-{order_id}",
         task_queue=task_queue,
         id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE,

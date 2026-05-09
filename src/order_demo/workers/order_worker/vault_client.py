@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import hvac
 
+from order_demo.vault_auth import VaultAuthConfig, authenticated_vault_client
 from order_demo.workers.order_worker.config import OrderWorkerConfig
 
 
@@ -16,18 +17,15 @@ class VaultDbCredentialsClient:
         self.cfg = cfg
 
     def _client(self) -> hvac.Client:
-        client = hvac.Client(url=self.cfg.vault_addr)
-        if self.cfg.vault_auth_method == "kubernetes":
-            with open(self.cfg.vault_kubernetes_jwt_path) as token_file:
-                jwt = token_file.read()
-            client.auth.kubernetes.login(
-                role=self.cfg.vault_kubernetes_role,
-                jwt=jwt,
+        return authenticated_vault_client(
+            VaultAuthConfig(
+                vault_addr=self.cfg.vault_addr,
+                vault_auth_method=self.cfg.vault_auth_method,
+                vault_token=self.cfg.vault_token,
+                vault_kubernetes_role=self.cfg.vault_kubernetes_role,
+                vault_kubernetes_jwt_path=self.cfg.vault_kubernetes_jwt_path,
             )
-            return client
-
-        client.token = self.cfg.vault_token
-        return client
+        )
 
     def generate_credentials(self) -> DbCredentials:
         client = self._client()

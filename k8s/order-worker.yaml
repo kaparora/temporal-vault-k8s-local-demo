@@ -54,3 +54,9 @@ spec:
               value: database
             - name: VAULT_DB_ROLE
               value: order-worker
+            - name: USE_VAULT_PAYLOAD_CODEC
+              value: "false"
+            - name: VAULT_TRANSIT_MOUNT
+              value: transit
+            - name: VAULT_TRANSIT_KEY
+              value: temporal-payloads

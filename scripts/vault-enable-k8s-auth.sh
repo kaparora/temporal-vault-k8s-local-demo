@@ -4,6 +4,8 @@ set -euo pipefail
 NAMESPACE="${NAMESPACE:-temporal-vault-demo}"
 VAULT_TOKEN="${VAULT_TOKEN:-root}"
 VAULT_DB_ROLE="${VAULT_DB_ROLE:-order-worker}"
+VAULT_TRANSIT_MOUNT="${VAULT_TRANSIT_MOUNT:-transit}"
+VAULT_TRANSIT_KEY="${VAULT_TRANSIT_KEY:-temporal-payloads}"
 VAULT_KUBERNETES_ROLE="${VAULT_KUBERNETES_ROLE:-order-worker}"
 WORKER_SERVICE_ACCOUNT="${WORKER_SERVICE_ACCOUNT:-order-worker}"
 
@@ -22,6 +24,14 @@ vault write auth/kubernetes/config \
 vault policy write order-worker - <<'POLICY'
 path \"database/creds/${VAULT_DB_ROLE}\" {
   capabilities = [\"read\"]
+}
+
+path \"${VAULT_TRANSIT_MOUNT}/encrypt/${VAULT_TRANSIT_KEY}\" {
+  capabilities = [\"update\"]
+}
+
+path \"${VAULT_TRANSIT_MOUNT}/decrypt/${VAULT_TRANSIT_KEY}\" {
+  capabilities = [\"update\"]
 }
 POLICY
 

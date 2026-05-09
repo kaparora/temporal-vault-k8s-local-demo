@@ -11,6 +11,10 @@ with workflow.unsafe.imports_passed_through():
 @dataclass
 class OrderFulfillmentInput:
     order_id: str
+    customer_name: str
+    customer_email: str
+    shipping_address: str
+    payment_token: str
 
 
 RETRY = RetryPolicy(

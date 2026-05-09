@@ -71,9 +71,9 @@ Kubernetes identity -> Vault auth -> database credentials
 
 That same identity foundation can later authorize Transit encrypt/decrypt.
 
-## Planned
-
 ### Milestone 4: Vault Transit Payload Encryption
+
+Status: complete.
 
 Goal: protect sensitive workflow data from Temporal server history.
 
@@ -101,6 +101,10 @@ Implementation direction:
 - Add a payload codec or converter backed by Vault Transit.
 - Optionally add a codec server for Temporal UI decode support.
 - Re-run the order workflow and show protected payloads.
+
+Details: [Milestone 4](milestone-4.md)
+
+## Planned
 
 ### Milestone 5: Least Privilege + Failure Scenarios
 

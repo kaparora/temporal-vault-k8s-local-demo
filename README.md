@@ -2,7 +2,7 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: Milestone 3 is complete.
+Current status: Milestone 4 is complete.
 
 The demo now shows the first two Vault security steps:
 
@@ -24,6 +24,7 @@ The full demo arc is:
 - [Milestone 1: Local Temporal + Postgres](docs/milestone-1.md)
 - [Milestone 2: Add Vault](docs/milestone-2.md)
 - [Milestone 3: Vault Kubernetes Auth](docs/milestone-3.md)
+- [Milestone 4: Vault Transit Payload Encryption](docs/milestone-4.md)
 - [Blog outline](docs/blog-outline.md)
 
 ## Prerequisites
@@ -86,6 +87,16 @@ make trigger ORDER_ID=ORD-001
 make logs-worker
 ```
 
+To run the Milestone 4 Transit payload encryption path:
+
+```bash
+make worker-k8s-transit
+make port-forward-temporal
+make port-forward-vault
+make trigger-transit ORDER_ID=ORD-001
+make logs-worker
+```
+
 Temporal UI is available at:
 
 ```text
@@ -109,6 +120,8 @@ make logs-vault
 make worker
 make worker-vault
 make worker-k8s
+make worker-k8s-transit
+make trigger-transit
 make logs-worker
 make db-shell
 make down
@@ -135,6 +148,7 @@ The before/after demo is:
 make worker        -> db_credential_source=static
 make worker-vault  -> db_credential_source=vault
 make worker-k8s    -> db_credential_source=vault, vault_auth_method=kubernetes
+make trigger-transit -> workflow payloads encrypted with Vault Transit
 ```
 
 In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...` for token auth and `v-kubernet-order-...` for Kubernetes auth.
@@ -164,9 +178,10 @@ make logs-worker
 
 Completed milestone details are captured in [docs/milestone-1.md](docs/milestone-1.md), [docs/milestone-2.md](docs/milestone-2.md), and [docs/milestone-3.md](docs/milestone-3.md).
 
+Milestone 4 details are captured in [docs/milestone-4.md](docs/milestone-4.md).
+
 Later milestones add:
 
-- Vault Transit payload encryption
 - per-activity least-privilege database roles
 - `ORD-002` out-of-stock failure
 - `ORD-003` payment failure with compensation

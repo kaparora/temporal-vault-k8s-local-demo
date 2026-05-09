@@ -118,7 +118,7 @@ Outcome:
 
 ### Milestone 4: Vault Transit Payload Encryption
 
-Status: planned.
+Status: complete.
 
 Goal: protect sensitive workflow data from being stored in plaintext in Temporal history.
 
