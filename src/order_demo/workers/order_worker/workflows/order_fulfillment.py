@@ -5,7 +5,12 @@ from temporalio import workflow
 from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
-    from order_demo.workers.order_worker.activities.order_activities import OrderActivities
+    from order_demo.workers.order_worker.activities.order_activities import (
+        FulfillmentRequest,
+        NotificationRequest,
+        OrderActivities,
+        PaymentRequest,
+    )
 
 
 @dataclass
@@ -45,19 +50,30 @@ class OrderFulfillmentWorkflow:
         )
         await workflow.execute_activity_method(
             OrderActivities.process_payment,
-            args=[inp.order_id, amount],
+            PaymentRequest(
+                order_id=inp.order_id,
+                amount=amount,
+                payment_token=inp.payment_token,
+            ),
             retry_policy=RETRY,
             start_to_close_timeout=timedelta(seconds=30),
         )
         await workflow.execute_activity_method(
             OrderActivities.mark_order_fulfilled,
-            inp.order_id,
+            FulfillmentRequest(
+                order_id=inp.order_id,
+                shipping_address=inp.shipping_address,
+            ),
             retry_policy=RETRY,
             start_to_close_timeout=timedelta(seconds=30),
         )
         await workflow.execute_activity_method(
             OrderActivities.send_notification,
-            args=[inp.order_id, "ORDER_FULFILLED"],
+            NotificationRequest(
+                order_id=inp.order_id,
+                customer_email=inp.customer_email,
+                notification_type="ORDER_FULFILLED",
+            ),
             retry_policy=RETRY,
             start_to_close_timeout=timedelta(seconds=30),
         )

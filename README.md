@@ -2,7 +2,7 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: Milestone 4 is complete.
+Current status: Milestone 5 is in progress.
 
 The demo now shows the first two Vault security steps:
 
@@ -25,6 +25,7 @@ The full demo arc is:
 - [Milestone 2: Add Vault](docs/milestone-2.md)
 - [Milestone 3: Vault Kubernetes Auth](docs/milestone-3.md)
 - [Milestone 4: Vault Transit Payload Encryption](docs/milestone-4.md)
+- [Milestone 5: Least Privilege + Failure Scenarios](docs/milestone-5.md)
 - [Blog outline](docs/blog-outline.md)
 
 ## Prerequisites
@@ -132,6 +133,12 @@ make down
 The current workflow supports the `ORD-001` happy path:
 
 - `ORD-001`: validates, reserves inventory, processes payment, marks fulfilled, sends notification
+
+The workflow input and selected activity inputs include demo-sensitive fields so the Transit before/after is visible in Temporal UI:
+
+- `customer_email`
+- `shipping_address`
+- `payment_token`
 
 Successful runs leave this database state:
 

@@ -108,15 +108,20 @@ Details: [Milestone 4](milestone-4.md)
 
 ### Milestone 5: Least Privilege + Failure Scenarios
 
+Status: in progress.
+
 Goal: restore the strongest database security and workflow behavior from the cloud demo.
 
 Expected outcome:
 
+- Make sensitive fields visible in activity payloads before Transit and hidden after Transit.
 - Per-activity Vault database roles.
 - `ORD-002` out-of-stock scenario.
 - `ORD-003` payment failure scenario.
 - Inventory compensation after payment failure.
 - Idempotent writes for retried activities.
+
+Details: [Milestone 5](milestone-5.md)
 
 ### Milestone 6: Polish
 

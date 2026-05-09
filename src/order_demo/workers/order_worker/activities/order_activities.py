@@ -23,6 +23,26 @@ class ValidateOrderResult:
     item: OrderItem
 
 
+@dataclass
+class PaymentRequest:
+    order_id: str
+    amount: float
+    payment_token: str
+
+
+@dataclass
+class FulfillmentRequest:
+    order_id: str
+    shipping_address: str
+
+
+@dataclass
+class NotificationRequest:
+    order_id: str
+    customer_email: str
+    notification_type: str
+
+
 class OrderActivities:
     def __init__(self, cfg: OrderWorkerConfig):
         self.cfg = cfg
@@ -131,8 +151,13 @@ class OrderActivities:
             await conn.close()
 
     @activity.defn
-    async def process_payment(self, order_id: str, amount: float) -> None:
-        activity.logger.info("processing_payment", order_id=order_id, amount=str(amount))
+    async def process_payment(self, req: PaymentRequest) -> None:
+        activity.logger.info(
+            "processing_payment",
+            order_id=req.order_id,
+            amount=str(req.amount),
+            payment_token_suffix=req.payment_token[-4:],
+        )
         conn = await self._connect()
         try:
             await conn.execute(
@@ -141,15 +166,19 @@ class OrderActivities:
                 VALUES ($1, $2, 'SUCCESS')
                 ON CONFLICT (order_id) DO NOTHING
                 """,
-                order_id,
-                amount,
+                req.order_id,
+                req.amount,
             )
         finally:
             await conn.close()
 
     @activity.defn
-    async def mark_order_fulfilled(self, order_id: str) -> None:
-        activity.logger.info("marking_order_fulfilled", order_id=order_id)
+    async def mark_order_fulfilled(self, req: FulfillmentRequest) -> None:
+        activity.logger.info(
+            "marking_order_fulfilled",
+            order_id=req.order_id,
+            shipping_address=req.shipping_address,
+        )
         conn = await self._connect()
         try:
             async with conn.transaction():
@@ -160,7 +189,7 @@ class OrderActivities:
                         updated_at = NOW()
                     WHERE id = $1
                     """,
-                    order_id,
+                    req.order_id,
                 )
                 await conn.execute(
                     """
@@ -168,17 +197,18 @@ class OrderActivities:
                     VALUES ($1, 'COMPLETED')
                     ON CONFLICT (order_id) DO NOTHING
                     """,
-                    order_id,
+                    req.order_id,
                 )
         finally:
             await conn.close()
 
     @activity.defn
-    async def send_notification(self, order_id: str, notification_type: str) -> None:
+    async def send_notification(self, req: NotificationRequest) -> None:
         activity.logger.info(
             "sending_notification",
-            order_id=order_id,
-            notification_type=notification_type,
+            order_id=req.order_id,
+            customer_email=req.customer_email,
+            notification_type=req.notification_type,
         )
         conn = await self._connect()
         try:
@@ -188,8 +218,8 @@ class OrderActivities:
                 VALUES ($1, $2, 'SENT')
                 ON CONFLICT (order_id, notification_type) DO NOTHING
                 """,
-                order_id,
-                notification_type,
+                req.order_id,
+                req.notification_type,
             )
         finally:
             await conn.close()

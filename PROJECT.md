@@ -131,12 +131,13 @@ Expected outcome:
 
 ### Milestone 5: Least Privilege + Failure Scenarios
 
-Status: planned.
+Status: in progress.
 
 Goal: restore the strongest security story from the cloud demo.
 
 Expected outcome:
 
+- Make sensitive fields visible in activity payloads before Transit and hidden after Transit.
 - Per-activity Vault database roles.
 - `ORD-002` out-of-stock failure.
 - `ORD-003` payment failure with compensation.
