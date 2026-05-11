@@ -52,7 +52,7 @@ flowchart LR
     worker -->|"polls orders-tq"| temporal
     worker -->|"logs in with\nServiceAccount JWT"| vault
     vault -->|"issues Vault token\npolicy: order-worker"| worker
-    worker -->|"reads database/creds/order-worker"| vault
+    worker -->|"reads database/creds/<role>"| vault
     vault -->|"creates short-lived\nPostgres user"| postgres
     worker -->|"connects with dynamic creds"| postgres
 ```
@@ -73,6 +73,8 @@ make worker-k8s
 ```
 
 `make worker-k8s` rebuilds and loads the worker image, refreshes the Vault manifest, reruns `vault-init`, enables Vault Kubernetes auth, and deploys the worker. The `vault-init` step is intentionally part of the target because Vault runs in dev mode and loses configuration if its pod restarts.
+
+Note: `order-worker` is the Kubernetes ServiceAccount, Vault auth role, and Vault policy name. Current database credentials are issued from narrower roles such as `order-validate` and `order-process-payment`.
 
 Keep Temporal UI and Temporal frontend reachable from the laptop:
 

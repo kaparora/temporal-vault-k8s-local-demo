@@ -53,7 +53,7 @@ spec:
             - name: VAULT_DB_MOUNT
               value: database
             - name: VAULT_DB_ROLE
-              value: order-worker
+              value: order-validate
             - name: USE_VAULT_PAYLOAD_CODEC
               value: "false"
             - name: VAULT_TRANSIT_MOUNT

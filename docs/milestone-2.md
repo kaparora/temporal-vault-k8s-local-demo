@@ -74,20 +74,20 @@ The worker should connect to Vault first, request database credentials, then use
 VAULT_ADDR=http://localhost:8200
 VAULT_TOKEN=root
 VAULT_DB_MOUNT=database
-VAULT_DB_ROLE=order-worker
+VAULT_DB_ROLE=order-validate
 ```
 
 Milestone 2 can still use a static root token because the goal is dynamic database credentials, not worker identity. Kubernetes auth replaces this in Milestone 3.
 
 ## Database Role
 
-Use one broad role first:
+Milestone 2 originally used one broad database role first:
 
 ```text
 order-worker
 ```
 
-It should be able to read and write the demo tables needed by all Milestone 1 activities.
+That role was later removed in Milestone 5. In the current project state, helper commands default to the narrow `order-validate` role and worker activities request activity-specific roles.
 
 Per-activity roles are intentionally deferred:
 

@@ -43,5 +43,5 @@ class OrderWorkerConfig:
                 "/var/run/secrets/kubernetes.io/serviceaccount/token",
             ),
             vault_db_mount=os.getenv("VAULT_DB_MOUNT", "database"),
-            vault_db_role=os.getenv("VAULT_DB_ROLE", "order-worker"),
+            vault_db_role=os.getenv("VAULT_DB_ROLE", "order-validate"),
         )

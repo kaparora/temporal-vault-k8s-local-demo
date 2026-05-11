@@ -3,7 +3,7 @@ set -euo pipefail
 
 NAMESPACE="${NAMESPACE:-temporal-vault-demo}"
 VAULT_TOKEN="${VAULT_TOKEN:-root}"
-VAULT_DB_ROLE="${VAULT_DB_ROLE:-order-worker}"
+VAULT_DB_ROLE="${VAULT_DB_ROLE:-order-validate}"
 
 kubectl -n "${NAMESPACE}" exec deployment/vault -- sh -ec "
 export VAULT_ADDR=http://127.0.0.1:8200

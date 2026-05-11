@@ -1,3 +1,4 @@
+from order_demo.client.trigger_order import demo_input_for_order
 from order_demo.workers.order_worker.workflows.order_fulfillment import OrderFulfillmentInput
 from order_demo.workers.order_worker.activities.order_activities import (
     FulfillmentRequest,
@@ -38,3 +39,19 @@ def test_sensitive_activity_payloads_are_self_describing() -> None:
     assert payment.payment_token == "tok_demo_visa_4242_sensitive"
     assert fulfillment.shipping_address == "42 Market Street, Berlin"
     assert notification.customer_email == "avery.stone@example.com"
+
+
+def test_ord_003_uses_declined_demo_payment_token(monkeypatch) -> None:
+    monkeypatch.delenv("DEMO_PAYMENT_TOKEN", raising=False)
+
+    inp = demo_input_for_order("ORD-003")
+
+    assert inp.payment_token == "tok_demo_card_declined_sensitive"
+
+
+def test_demo_payment_token_override_is_respected(monkeypatch) -> None:
+    monkeypatch.setenv("DEMO_PAYMENT_TOKEN", "tok_custom_sensitive")
+
+    inp = demo_input_for_order("ORD-003")
+
+    assert inp.payment_token == "tok_custom_sensitive"

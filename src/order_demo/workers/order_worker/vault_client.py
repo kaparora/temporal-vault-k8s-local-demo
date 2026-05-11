@@ -27,10 +27,10 @@ class VaultDbCredentialsClient:
             )
         )
 
-    def generate_credentials(self) -> DbCredentials:
+    def generate_credentials(self, role: str | None = None) -> DbCredentials:
         client = self._client()
         response = client.secrets.database.generate_credentials(
-            name=self.cfg.vault_db_role,
+            name=role or self.cfg.vault_db_role,
             mount_point=self.cfg.vault_db_mount,
         )
         data = response["data"]

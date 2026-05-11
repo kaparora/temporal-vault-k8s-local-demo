@@ -60,14 +60,31 @@ data:
     SET quantity = GREATEST(inventory.quantity, EXCLUDED.quantity),
         updated_at = NOW();
 
+    INSERT INTO inventory (product_id, quantity)
+    VALUES ('WIDGET-002', 0)
+    ON CONFLICT (product_id) DO UPDATE
+    SET quantity = 0,
+        updated_at = NOW();
+
+    DELETE FROM notifications WHERE order_id IN ('ORD-001', 'ORD-002', 'ORD-003');
+    DELETE FROM fulfilments WHERE order_id IN ('ORD-001', 'ORD-002', 'ORD-003');
+    DELETE FROM payments WHERE order_id IN ('ORD-001', 'ORD-002', 'ORD-003');
+    DELETE FROM inventory_reservations WHERE order_id IN ('ORD-001', 'ORD-002', 'ORD-003');
+
     INSERT INTO orders (id, customer_id, status)
-    VALUES ('ORD-001', 'CUST-001', 'PENDING')
+    VALUES
+      ('ORD-001', 'CUST-001', 'PENDING'),
+      ('ORD-002', 'CUST-002', 'PENDING'),
+      ('ORD-003', 'CUST-003', 'PENDING')
     ON CONFLICT (id) DO UPDATE
     SET status = 'PENDING',
         updated_at = NOW();
 
     INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-    VALUES ('ORD-001', 'WIDGET-001', 1, 19.99)
+    VALUES
+      ('ORD-001', 'WIDGET-001', 1, 19.99),
+      ('ORD-002', 'WIDGET-002', 1, 29.99),
+      ('ORD-003', 'WIDGET-001', 1, 39.99)
     ON CONFLICT (order_id) DO UPDATE
     SET product_id = EXCLUDED.product_id,
         quantity = EXCLUDED.quantity,

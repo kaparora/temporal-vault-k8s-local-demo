@@ -77,14 +77,16 @@ Status: complete.
 
 Goal: protect sensitive workflow data from Temporal server history.
 
-The current workflow payload is not rich enough for this demo because it only carries an order ID. Before adding encryption, enrich the payload with sensitive demo fields:
+Outcome:
+
+Sensitive workflow payloads now include:
 
 - customer name
 - customer email
 - shipping address
-- payment token or payment reference
+- payment token
 
-Expected before/after:
+Before/after:
 
 ```text
 Before Transit:
@@ -95,33 +97,34 @@ After Transit:
   Authorized decode paths can decrypt through Vault Transit.
 ```
 
-Implementation direction:
+Implemented:
 
 - Configure Vault Transit.
-- Add a payload codec or converter backed by Vault Transit.
-- Optionally add a codec server for Temporal UI decode support.
-- Re-run the order workflow and show protected payloads.
+- Add a payload codec backed by Vault Transit.
+- Use a separate Transit task queue so encrypted tasks are handled by a codec-enabled worker.
+- Re-run the order workflow and show protected payloads in Temporal UI.
 
 Details: [Milestone 4](milestone-4.md)
 
-## Planned
-
 ### Milestone 5: Least Privilege + Failure Scenarios
 
-Status: in progress.
+Status: complete.
 
 Goal: restore the strongest database security and workflow behavior from the cloud demo.
 
-Expected outcome:
+Outcome:
 
 - Make sensitive fields visible in activity payloads before Transit and hidden after Transit.
-- Per-activity Vault database roles.
 - `ORD-002` out-of-stock scenario.
 - `ORD-003` payment failure scenario.
 - Inventory compensation after payment failure.
+- Per-activity Vault database roles.
 - Idempotent writes for retried activities.
+- Remove the broad compatibility `order-worker` database role.
 
 Details: [Milestone 5](milestone-5.md)
+
+## Planned
 
 ### Milestone 6: Polish
 

@@ -39,6 +39,8 @@ The worker still uses the order ID for the current business logic. The other fie
 
 When `USE_VAULT_PAYLOAD_CODEC=true`, both the trigger client and worker use a Temporal `PayloadCodec` backed by Vault Transit.
 
+The Transit demo uses a separate task queue, `orders-tq-transit`, so encrypted tasks are not accidentally picked up by a plaintext worker.
+
 The codec:
 
 - serializes the original Temporal payload

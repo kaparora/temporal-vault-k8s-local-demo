@@ -6,6 +6,7 @@ ORDER_ID ?= ORD-001
 TEMPORAL_ADDRESS ?= localhost:7233
 TEMPORAL_NAMESPACE ?= default
 ORDERS_TASK_QUEUE ?= orders-tq
+TRANSIT_ORDERS_TASK_QUEUE ?= orders-tq-transit
 POSTGRES_HOST ?= localhost
 POSTGRES_PORT ?= 5432
 POSTGRES_DB ?= temporal
@@ -14,12 +15,14 @@ POSTGRES_PASSWORD ?= temporal
 VAULT_ADDR ?= http://localhost:8200
 VAULT_TOKEN ?= root
 VAULT_DB_MOUNT ?= database
-VAULT_DB_ROLE ?= order-worker
+VAULT_DB_ROLE ?= order-validate
 VAULT_TRANSIT_MOUNT ?= transit
 VAULT_TRANSIT_KEY ?= temporal-payloads
 USE_VAULT_DB_CREDS ?= false
 USE_VAULT_PAYLOAD_CODEC ?= false
-WORKER_IMAGE ?= temporal-vault-order-worker:local
+WORKER_IMAGE_NAME ?= temporal-vault-order-worker
+WORKER_IMAGE_TAG ?= $(shell git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)
+WORKER_IMAGE ?= $(WORKER_IMAGE_NAME):$(WORKER_IMAGE_TAG)
 VAULT_KUBERNETES_ROLE ?= order-worker
 WORKER_SERVICE_ACCOUNT ?= order-worker
 
@@ -60,7 +63,6 @@ vault-init:
 	POSTGRES_USER=$(POSTGRES_USER) \
 	POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
 	VAULT_TOKEN=$(VAULT_TOKEN) \
-	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
 	bash scripts/vault-init.sh
 
 vault-init-transit:
@@ -73,7 +75,6 @@ vault-init-transit:
 vault-enable-k8s-auth:
 	NAMESPACE=$(NAMESPACE) \
 	VAULT_TOKEN=$(VAULT_TOKEN) \
-	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
 	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
 	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
 	VAULT_KUBERNETES_ROLE=$(VAULT_KUBERNETES_ROLE) \
@@ -141,8 +142,7 @@ worker-load:
 	kind load docker-image $(WORKER_IMAGE) --name $(CLUSTER_NAME)
 
 worker-deploy:
-	kubectl apply -f k8s/order-worker.yaml
-	kubectl -n $(NAMESPACE) rollout restart deployment/order-worker
+	sed "s|temporal-vault-order-worker:local|$(WORKER_IMAGE)|g" k8s/order-worker.yaml | kubectl apply -f -
 	kubectl -n $(NAMESPACE) rollout status deployment/order-worker --timeout=120s
 
 worker-k8s: worker-image worker-load vault-deploy vault-init vault-enable-k8s-auth worker-deploy
@@ -151,6 +151,7 @@ worker-k8s-transit: worker-image worker-load vault-deploy vault-init vault-init-
 
 worker-enable-transit:
 	NAMESPACE=$(NAMESPACE) \
+	ORDERS_TASK_QUEUE=$(TRANSIT_ORDERS_TASK_QUEUE) \
 	USE_VAULT_PAYLOAD_CODEC=true \
 	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
 	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
@@ -158,6 +159,7 @@ worker-enable-transit:
 
 worker-disable-transit:
 	NAMESPACE=$(NAMESPACE) \
+	ORDERS_TASK_QUEUE=$(ORDERS_TASK_QUEUE) \
 	USE_VAULT_PAYLOAD_CODEC=false \
 	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
 	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
@@ -179,7 +181,7 @@ trigger:
 	uv run python -m order_demo.client.trigger_order $(ORDER_ID)
 
 trigger-transit:
-	USE_VAULT_PAYLOAD_CODEC=true $(MAKE) trigger
+	ORDERS_TASK_QUEUE=$(TRANSIT_ORDERS_TASK_QUEUE) USE_VAULT_PAYLOAD_CODEC=true $(MAKE) trigger
 
 trigger-transit-disabled:
 	USE_VAULT_PAYLOAD_CODEC=false $(MAKE) trigger

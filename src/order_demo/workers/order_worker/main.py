@@ -33,7 +33,9 @@ async def main() -> None:
         activities=[
             activities.validate_order,
             activities.reserve_inventory,
+            activities.release_inventory,
             activities.process_payment,
+            activities.fail_order,
             activities.mark_order_fulfilled,
             activities.send_notification,
         ],

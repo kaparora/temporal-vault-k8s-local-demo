@@ -4,7 +4,7 @@ set -euo pipefail
 NAMESPACE="${NAMESPACE:-temporal-vault-demo}"
 POSTGRES_DB="${POSTGRES_DB:-temporal}"
 VAULT_TOKEN="${VAULT_TOKEN:-root}"
-VAULT_DB_ROLE="${VAULT_DB_ROLE:-order-worker}"
+VAULT_DB_ROLE="${VAULT_DB_ROLE:-order-validate}"
 
 vault_exec() {
   kubectl -n "${NAMESPACE}" exec deployment/vault -- sh -ec "

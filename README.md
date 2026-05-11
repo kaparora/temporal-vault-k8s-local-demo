@@ -2,13 +2,15 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: Milestone 5 is in progress.
+Current status: Milestone 5 is complete.
 
-The demo now shows the first two Vault security steps:
+The demo now shows the main Vault security layers:
 
 - before Vault: the worker uses static Postgres credentials
 - after Vault: the worker gets short-lived Postgres credentials from Vault's database secrets engine
 - after Kubernetes auth: the worker runs in Kubernetes and authenticates to Vault with its ServiceAccount identity
+- after Transit: sensitive workflow payloads are encrypted before they are stored in Temporal history
+- after least privilege: each activity gets a narrow database role instead of one broad worker credential
 
 The full demo arc is:
 
@@ -130,9 +132,11 @@ make down
 
 ## Current Demo
 
-The current workflow supports the `ORD-001` happy path:
+The current workflow supports three demo orders:
 
 - `ORD-001`: validates, reserves inventory, processes payment, marks fulfilled, sends notification
+- `ORD-002`: out of stock
+- `ORD-003`: payment failure with inventory compensation
 
 The workflow input and selected activity inputs include demo-sensitive fields so the Transit before/after is visible in Temporal UI:
 
@@ -148,6 +152,23 @@ inventory_reservations:  ORD-001 -> WIDGET-001 qty 1
 payments:                ORD-001 -> 19.99 SUCCESS
 notifications:           ORD-001 -> ORDER_FULFILLED SENT
 ```
+
+Failure scenario outcomes:
+
+```text
+ORD-002: OUT_OF_STOCK, no reservation, no payment
+ORD-003: PAYMENT_FAILED, inventory reservation released, payment FAILED
+```
+
+Vault database credentials are now requested per activity role, for example:
+
+```text
+validate_order -> order-validate
+process_payment -> order-process-payment
+send_notification -> order-send-notification
+```
+
+The older broad `order-worker` database role has been removed. The `order-worker` name still appears as the Kubernetes ServiceAccount and Vault auth role name, but database credentials come from the narrower activity roles.
 
 The before/after demo is:
 
@@ -180,18 +201,29 @@ After Kubernetes auth:
 ```bash
 make worker-k8s
 make trigger ORDER_ID=ORD-001
+make trigger ORDER_ID=ORD-002
+make trigger ORDER_ID=ORD-003
 make logs-worker
 ```
 
-Completed milestone details are captured in [docs/milestone-1.md](docs/milestone-1.md), [docs/milestone-2.md](docs/milestone-2.md), and [docs/milestone-3.md](docs/milestone-3.md).
+`ORD-002` and `ORD-003` are expected to fail at the workflow level. They are demo failure paths that leave useful state in Postgres.
 
-Milestone 4 details are captured in [docs/milestone-4.md](docs/milestone-4.md).
+Completed milestone details are captured in:
 
-Later milestones add:
+- [docs/milestone-1.md](docs/milestone-1.md)
+- [docs/milestone-2.md](docs/milestone-2.md)
+- [docs/milestone-3.md](docs/milestone-3.md)
+- [docs/milestone-4.md](docs/milestone-4.md)
+- [docs/milestone-5.md](docs/milestone-5.md)
+
+Milestone 5 added:
 
 - per-activity least-privilege database roles
 - `ORD-002` out-of-stock failure
 - `ORD-003` payment failure with compensation
+
+Future scope:
+
 - future Vault PKI + Temporal mTLS
 
 ## Target Architecture
@@ -219,8 +251,8 @@ flowchart LR
     worker -->|"encrypts/decrypts payloads\nwith Transit"| vault
 ```
 
-Current status: Milestone 3 moved the worker into Kubernetes and replaced the worker's `VAULT_TOKEN=root` runtime path with Vault Kubernetes auth. The trigger client still runs locally.
+Current status: the worker runs in Kubernetes, authenticates to Vault with Kubernetes auth, gets per-activity dynamic Postgres credentials, and can optionally encrypt Temporal payloads with Vault Transit. The trigger client still runs locally.
 
 ## Notes
 
-This is a local development demo, not a production deployment. Vault still runs in dev mode, and setup scripts still use the root token to configure Vault. The Milestone 3 worker runtime uses Vault Kubernetes auth instead of the root token.
+This is a local development demo, not a production deployment. Vault still runs in dev mode, and setup scripts still use the root token to configure Vault. The Kubernetes worker runtime uses Vault Kubernetes auth instead of the root token.
