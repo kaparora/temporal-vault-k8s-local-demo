@@ -135,6 +135,7 @@ Goal: make the project easy to demo, reset, and explain.
 Expected outcome:
 
 - Tight README walkthrough.
+- Numbered narrated demo scripts.
 - Reset/teardown commands.
 - Diagrams.
 - Troubleshooting notes.

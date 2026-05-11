@@ -78,6 +78,8 @@ You can also run all four in one terminal:
 make port-forward
 ```
 
+For a narrated version of the same flow, use the numbered scripts in [scripts/demo](scripts/demo/README.md). They print the demo intent, run the underlying `make` commands, and call out what to show in Temporal UI, Vault, logs, and Postgres.
+
 ### 1. Before Vault: Static Database Credentials
 
 Start the local worker without Vault-issued database credentials:
