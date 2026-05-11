@@ -404,28 +404,52 @@ Future scope:
 
 ```mermaid
 flowchart LR
-    client["Trigger Client"] -->|"starts order workflow"| temporal
+    subgraph local["Local machine"]
+        trigger["Trigger client\nmake trigger"]
+        browser["Browser\nTemporal UI"]
+    end
 
     subgraph k8s["kind Kubernetes cluster"]
-        temporal["Temporal Server\norchestration + history"]
+        temporal["Temporal Server\nworkflow orchestration + history"]
         ui["Temporal UI"]
-        worker["Order Worker Pod\nKubernetes ServiceAccount"]
+        worker["Order Worker Pod\nServiceAccount: order-worker"]
         vault["Vault\nKubernetes Auth + DB Secrets + Transit"]
         postgres["Postgres\norders database"]
     end
 
-    worker -->|"polls task queue"| temporal
-    ui -->|"views workflow history"| temporal
+    trigger -->|"starts workflow\nlocalhost:7233"| temporal
+    browser -->|"opens localhost:8080"| ui
+    ui -->|"reads workflow history"| temporal
+
+    worker -->|"polls orders-tq\nor orders-tq-transit"| temporal
 
     worker -->|"authenticates with\nServiceAccount JWT"| vault
-    vault -->|"issues Vault token"| worker
-    worker -->|"reads database/creds/<role>"| vault
+    vault -->|"issues Vault token\npolicy: order-worker"| worker
+    worker -->|"reads database/creds/activity-role"| vault
     vault -->|"creates short-lived\nPostgres user"| postgres
-    worker -->|"connects with dynamic creds"| postgres
-    worker -->|"encrypts/decrypts payloads\nwith Transit"| vault
+    worker -->|"SQL with dynamic creds"| postgres
+
+    trigger -.->|"Transit encrypt/decrypt\nwhen enabled"| vault
+    worker -.->|"Transit encrypt/decrypt\nwhen enabled"| vault
 ```
 
 Current status: the worker runs in Kubernetes, authenticates to Vault with Kubernetes auth, gets per-activity dynamic Postgres credentials, and can optionally encrypt Temporal payloads with Vault Transit. The trigger client still runs locally.
+
+## Demo Flow
+
+```mermaid
+flowchart TD
+    s1["1. Before Vault\nWorker uses static Postgres credentials"]
+    s2["2. After Vault\nWorker gets short-lived DB credentials from Vault"]
+    s3["3. Kubernetes Auth\nWorker pod authenticates to Vault with ServiceAccount identity"]
+    s4["4. Before Transit\nSensitive workflow and activity payloads are visible in Temporal history"]
+    s5["5. After Transit\nTemporal stores payloads as binary/vault-transit"]
+    s6["6. Least Privilege\nEach activity reads database/creds/activity-role"]
+    s7["Failure Scenarios\nORD-002: OUT_OF_STOCK\nORD-003: PAYMENT_FAILED with compensation"]
+
+    s1 --> s2 --> s3 --> s4 --> s5 --> s6
+    s6 --> s7
+```
 
 ## Notes
 
