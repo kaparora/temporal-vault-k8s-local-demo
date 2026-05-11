@@ -128,6 +128,8 @@ Details: [Milestone 5](milestone-5.md)
 
 ### Milestone 6: Polish
 
+Status: in progress.
+
 Goal: make the project easy to demo, reset, and explain.
 
 Expected outcome:
