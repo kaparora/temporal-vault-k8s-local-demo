@@ -223,3 +223,12 @@ Together, they let you build workflows that are not only reliable, but meaningfu
 ## Resources
 
 - GitHub repository: [temporal-vault-k8s-local-demo](https://github.com/kaparora/temporal-vault-k8s-local-demo)
+- Demo guide: [README](https://github.com/kaparora/temporal-vault-k8s-local-demo/blob/main/README.md)
+- Demo roadmap and milestones: [roadmap](https://github.com/kaparora/temporal-vault-k8s-local-demo/blob/main/docs/roadmap.md)
+- Temporal Python SDK developer guide: [docs.temporal.io/develop/python](https://docs.temporal.io/develop/python)
+- Temporal Python data handling, payload conversion, and payload encryption: [docs.temporal.io/develop/python/data-handling](https://docs.temporal.io/develop/python/data-handling)
+- Temporal Python error handling and activity idempotency: [docs.temporal.io/develop/python/best-practices/error-handling](https://docs.temporal.io/develop/python/best-practices/error-handling)
+- HashiCorp Vault database secrets engine: [developer.hashicorp.com/vault/docs/secrets/databases](https://developer.hashicorp.com/vault/docs/secrets/databases)
+- HashiCorp Vault Kubernetes auth method: [developer.hashicorp.com/vault/docs/auth/kubernetes](https://developer.hashicorp.com/vault/docs/auth/kubernetes)
+- HashiCorp Vault Transit secrets engine: [developer.hashicorp.com/vault/docs/secrets/transit](https://developer.hashicorp.com/vault/docs/secrets/transit)
+- HashiCorp Vault policies: [developer.hashicorp.com/vault/docs/concepts/policies](https://developer.hashicorp.com/vault/docs/concepts/policies)
