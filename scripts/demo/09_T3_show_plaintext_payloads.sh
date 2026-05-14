@@ -2,17 +2,15 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-step "Before Transit: sensitive payloads visible in Temporal history"
+step "T3: Before Transit"
+note "Terminal 2 should have run 07_T2_worker_k8s_auth.sh."
 note "This uses the normal Kubernetes worker on orders-tq."
 
 step "Reset demo data"
-run make db-init
-
-step "Deploy the plaintext Kubernetes worker"
-run make worker-k8s
+run make reset-data
 
 step "Trigger the happy-path order"
-run make trigger ORDER_ID=ORD-001
+run make run-order ORDER_ID=ORD-001
 
 step "What to show in Temporal UI"
 note "Inspect workflow input and activity inputs."

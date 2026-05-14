@@ -38,10 +38,6 @@ spec:
               value: "5432"
             - name: POSTGRES_DB
               value: temporal
-            - name: POSTGRES_USER
-              value: temporal
-            - name: POSTGRES_PASSWORD
-              value: temporal
             - name: USE_VAULT_DB_CREDS
               value: "true"
             - name: VAULT_ADDR

@@ -2,18 +2,15 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-step "Kubernetes auth: workload identity for the worker"
-note "This deploys the order worker as a Kubernetes pod."
-note "The pod authenticates to Vault with the order-worker ServiceAccount JWT."
+step "T3: Show Kubernetes auth"
+note "Terminal 2 should have run 07_T2_worker_k8s_auth.sh."
+note "The Kubernetes worker should be the only worker polling orders-tq."
 
 step "Reset demo data"
-run make db-init
-
-step "Deploy the Kubernetes worker"
-run make worker-k8s
+run make reset-data
 
 step "Trigger the happy-path order"
-run make trigger ORDER_ID=ORD-001
+run make run-order ORDER_ID=ORD-001
 
 step "Show worker logs"
 run make logs-worker

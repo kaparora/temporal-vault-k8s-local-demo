@@ -108,7 +108,7 @@ Vault Transit lets the demo keep Temporal as the orchestrator while moving encry
 
 ## Caveats
 
-- The local trigger client still uses `VAULT_TOKEN=root` to reach Vault Transit.
+- The local trigger client uses a limited demo token to reach Vault Transit.
 - The Kubernetes worker uses Vault Kubernetes auth and the `order-worker` Vault policy.
 - Vault still runs in dev mode.
 - A production system should use a proper codec server for controlled UI decode access.

@@ -3,6 +3,7 @@ set -euo pipefail
 
 NAMESPACE="${NAMESPACE:-temporal-vault-demo}"
 VAULT_TOKEN="${VAULT_TOKEN:-root}"
+VAULT_TRANSIT_CLIENT_TOKEN="${VAULT_TRANSIT_CLIENT_TOKEN:-demo-transit-client-token}"
 VAULT_TRANSIT_MOUNT="${VAULT_TRANSIT_MOUNT:-transit}"
 VAULT_TRANSIT_KEY="${VAULT_TRANSIT_KEY:-temporal-payloads}"
 
@@ -15,4 +16,20 @@ vault secrets enable -path='${VAULT_TRANSIT_MOUNT}' transit 2>/tmp/vault-enable-
 
 vault write -f '${VAULT_TRANSIT_MOUNT}/keys/${VAULT_TRANSIT_KEY}'
 vault read '${VAULT_TRANSIT_MOUNT}/keys/${VAULT_TRANSIT_KEY}'
+
+vault policy write temporal-trigger-transit - <<'POLICY'
+path \"${VAULT_TRANSIT_MOUNT}/encrypt/${VAULT_TRANSIT_KEY}\" {
+  capabilities = [\"update\"]
+}
+
+path \"${VAULT_TRANSIT_MOUNT}/decrypt/${VAULT_TRANSIT_KEY}\" {
+  capabilities = [\"update\"]
+}
+POLICY
+
+vault token create \
+  -id='${VAULT_TRANSIT_CLIENT_TOKEN}' \
+  -policy=temporal-trigger-transit \
+  -ttl=8h \
+  -renewable=false
 "

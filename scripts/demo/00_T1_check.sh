@@ -2,7 +2,7 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-step "Check required local tools"
+step "T1: Check required local tools"
 note "The demo needs Docker, kind, kubectl, Python tooling through uv, and make."
 
 for tool in docker kind kubectl uv make; do
@@ -16,8 +16,5 @@ done
 
 step "Check Docker connectivity"
 note "kind needs Docker to create and manage the local Kubernetes cluster."
-run docker info
-
-step "Check repository status"
-note "A clean tree is not required, but it helps avoid surprise demo behavior."
-run git status --short --branch
+docker version >/dev/null
+note "Docker is reachable."

@@ -34,8 +34,8 @@ Status: complete.
 Added the before/after credential demo:
 
 ```text
-make worker        -> static Postgres credentials
-make worker-vault  -> Vault-generated Postgres credentials
+make worker-static    -> static Postgres credentials
+make worker-vault-db  -> Vault-generated Postgres credentials
 ```
 
 The Vault-backed worker logs generated database usernames such as:

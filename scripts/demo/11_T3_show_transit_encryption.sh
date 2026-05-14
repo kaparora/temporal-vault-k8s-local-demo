@@ -2,18 +2,17 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-step "After Transit: sensitive payloads encrypted in Temporal history"
+step "T3: After Transit"
+note "Terminal 2 should have run 10_T2_worker_transit.sh."
 note "This uses the separate orders-tq-transit task queue."
-note "The trigger client and worker both use the Vault Transit payload codec."
+note "The trigger client uses a limited Transit token."
+note "The Kubernetes worker uses Vault Kubernetes auth."
 
 step "Reset demo data"
-run make db-init
-
-step "Deploy the Transit-enabled Kubernetes worker"
-run make worker-k8s-transit
+run make reset-data
 
 step "Trigger the encrypted-payload workflow"
-run make trigger-transit ORDER_ID=ORD-001
+run make run-order-transit ORDER_ID=ORD-001
 
 step "Show worker logs"
 run make logs-worker

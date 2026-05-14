@@ -14,6 +14,7 @@ POSTGRES_USER ?= temporal
 POSTGRES_PASSWORD ?= temporal
 VAULT_ADDR ?= http://localhost:8200
 VAULT_TOKEN ?= root
+VAULT_TRANSIT_CLIENT_TOKEN ?= demo-transit-client-token
 VAULT_DB_MOUNT ?= database
 VAULT_DB_ROLE ?= order-validate
 VAULT_TRANSIT_MOUNT ?= transit
@@ -26,7 +27,70 @@ WORKER_IMAGE ?= $(WORKER_IMAGE_NAME):$(WORKER_IMAGE_TAG)
 VAULT_KUBERNETES_ROLE ?= order-worker
 WORKER_SERVICE_ACCOUNT ?= order-worker
 
-.PHONY: install up deploy wait db-init vault-deploy vault-init vault-init-transit vault-enable-k8s-auth vault-read-db-creds vault-test-db-creds worker-image worker-load worker-deploy worker-k8s worker-k8s-transit worker-enable-transit worker-disable-transit worker-k8s-restart port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger trigger-transit status logs-temporal logs-postgres logs-vault logs-worker db-shell lint test down
+.PHONY: help setup ports reset-data reset worker-static worker-vault-db demo-build-worker worker-k8s-deploy worker-k8s-transit-deploy worker-transit run-order run-order-transit run-failures verify install up deploy wait db-init vault-deploy vault-init vault-init-transit vault-enable-k8s-auth vault-read-db-creds vault-test-db-creds worker-image worker-load worker-deploy worker-k8s worker-k8s-transit worker-enable-transit worker-disable-transit worker-k8s-restart port-forward port-forward-temporal port-forward-ui port-forward-postgres port-forward-vault worker worker-vault trigger trigger-transit status logs-temporal logs-postgres logs-vault logs-worker db-shell lint test down
+
+help:
+	@echo "Demo targets:"
+	@echo "  make setup              Install deps, create cluster, deploy services, seed DB/Vault"
+	@echo "  make ports              Start all local port-forwards"
+	@echo "  make reset-data         Reset demo orders/inventory/payments only"
+	@echo "  make reset              Reset demo DB and Vault configuration"
+	@echo "  make worker-static      Run local worker with static DB credentials"
+	@echo "  make worker-vault-db    Run local worker with Vault dynamic DB credentials"
+	@echo "  make demo-build-worker  Build/load the Kubernetes worker image once"
+	@echo "  make worker-k8s-deploy  Deploy/switch Kubernetes worker with Vault Kubernetes auth"
+	@echo "  make worker-transit     Deploy Kubernetes worker with Vault Transit payload codec"
+	@echo "  make run-order          Run ORDER_ID, default ORD-001"
+	@echo "  make run-order-transit  Run ORDER_ID through Transit task queue"
+	@echo "  make run-failures       Run ORD-001/002/003; ORD-002 and ORD-003 are expected failures"
+	@echo "  make verify             Show status, Vault DB smoke test, and worker logs"
+	@echo "  make down               Delete the local kind cluster"
+	@echo ""
+	@echo "Lower-level targets remain available below for development."
+
+setup: install up deploy wait db-init vault-init vault-init-transit vault-enable-k8s-auth
+
+ports: port-forward
+
+reset-data: db-init
+
+reset: db-init vault-init vault-init-transit vault-enable-k8s-auth
+
+worker-static: worker
+
+worker-vault-db:
+	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
+	TEMPORAL_NAMESPACE=$(TEMPORAL_NAMESPACE) \
+	ORDERS_TASK_QUEUE=$(ORDERS_TASK_QUEUE) \
+	POSTGRES_HOST=$(POSTGRES_HOST) \
+	POSTGRES_PORT=$(POSTGRES_PORT) \
+	USE_VAULT_DB_CREDS=true \
+	VAULT_ADDR=$(VAULT_ADDR) \
+	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_DB_MOUNT=$(VAULT_DB_MOUNT) \
+	VAULT_DB_ROLE=$(VAULT_DB_ROLE) \
+	uv run python -m order_demo.workers.order_worker.main
+
+demo-build-worker: worker-image worker-load
+
+worker-k8s-deploy: worker-deploy worker-disable-transit
+
+worker-k8s-transit-deploy: worker-deploy worker-enable-transit
+
+worker-transit: worker-k8s-transit-deploy
+
+run-order: trigger
+
+run-order-transit: trigger-transit
+
+run-failures:
+	$(MAKE) trigger ORDER_ID=ORD-001
+	-$(MAKE) trigger ORDER_ID=ORD-002
+	-$(MAKE) trigger ORDER_ID=ORD-003
+
+verify: status vault-init vault-test-db-creds logs-worker
+
+# Development targets
 
 install:
 	uv sync --all-extras
@@ -68,6 +132,7 @@ vault-init:
 vault-init-transit:
 	NAMESPACE=$(NAMESPACE) \
 	VAULT_TOKEN=$(VAULT_TOKEN) \
+	VAULT_TRANSIT_CLIENT_TOKEN=$(VAULT_TRANSIT_CLIENT_TOKEN) \
 	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
 	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
 	bash scripts/vault-init-transit.sh
@@ -173,15 +238,19 @@ trigger:
 	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
 	TEMPORAL_NAMESPACE=$(TEMPORAL_NAMESPACE) \
 	ORDERS_TASK_QUEUE=$(ORDERS_TASK_QUEUE) \
-	USE_VAULT_PAYLOAD_CODEC=$(USE_VAULT_PAYLOAD_CODEC) \
-	VAULT_ADDR=$(VAULT_ADDR) \
-	VAULT_TOKEN=$(VAULT_TOKEN) \
-	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
-	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
+	USE_VAULT_PAYLOAD_CODEC=false \
 	uv run python -m order_demo.client.trigger_order $(ORDER_ID)
 
 trigger-transit:
-	ORDERS_TASK_QUEUE=$(TRANSIT_ORDERS_TASK_QUEUE) USE_VAULT_PAYLOAD_CODEC=true $(MAKE) trigger
+	TEMPORAL_ADDRESS=$(TEMPORAL_ADDRESS) \
+	TEMPORAL_NAMESPACE=$(TEMPORAL_NAMESPACE) \
+	ORDERS_TASK_QUEUE=$(TRANSIT_ORDERS_TASK_QUEUE) \
+	USE_VAULT_PAYLOAD_CODEC=true \
+	VAULT_ADDR=$(VAULT_ADDR) \
+	VAULT_TOKEN=$(VAULT_TRANSIT_CLIENT_TOKEN) \
+	VAULT_TRANSIT_MOUNT=$(VAULT_TRANSIT_MOUNT) \
+	VAULT_TRANSIT_KEY=$(VAULT_TRANSIT_KEY) \
+	uv run python -m order_demo.client.trigger_order $(ORDER_ID)
 
 trigger-transit-disabled:
 	USE_VAULT_PAYLOAD_CODEC=false $(MAKE) trigger

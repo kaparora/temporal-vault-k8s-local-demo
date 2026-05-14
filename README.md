@@ -41,15 +41,12 @@ The full demo arc is:
 ## Quick Start
 
 ```bash
-make install
-make up
-make deploy
-make wait
-make db-init
-make vault-init
+make setup
 ```
 
-After `make port-forward-ui` is running, Temporal UI is available at:
+`make setup` installs Python dependencies, creates the kind cluster, deploys Postgres, Temporal, Temporal UI, and Vault, seeds the demo database, configures Vault database roles, configures Vault Transit, creates the limited Transit trigger token, and enables Vault Kubernetes auth.
+
+After `make ports` is running, Temporal UI is available at:
 
 ```text
 http://localhost:8080
@@ -66,32 +63,29 @@ The demo is easiest to run with a few terminals:
 Keep these port-forwards open for local workers and browser inspection:
 
 ```bash
-make port-forward-temporal
-make port-forward-postgres
-make port-forward-vault
-make port-forward-ui
+make ports
 ```
 
-You can also run all four in one terminal:
+For video creation or live presentation, use the terminal-based numbered scripts in [scripts/demo](scripts/demo/README.md). They print the demo intent, run the underlying `make` commands, and call out what to show in Temporal UI, Vault, logs, and Postgres. The final script, `14_T1_cleanup.sh`, deletes the local kind cluster.
 
-```bash
-make port-forward
-```
+The script flow uses three terminals:
 
-For a narrated version of the same flow, use the numbered scripts in [scripts/demo](scripts/demo/README.md). They print the demo intent, run the underlying `make` commands, and call out what to show in Temporal UI, Vault, logs, and Postgres.
+- `T1`: setup and port-forwards
+- `T2`: worker mode changes
+- `T3`: workflow runs and verification
 
 ### 1. Before Vault: Static Database Credentials
 
 Start the local worker without Vault-issued database credentials:
 
 ```bash
-make worker
+make worker-static
 ```
 
 Trigger the happy-path order:
 
 ```bash
-make trigger ORDER_ID=ORD-001
+make run-order ORDER_ID=ORD-001
 ```
 
 The worker logs should show:
@@ -102,22 +96,22 @@ db_credential_source=static
 
 ### 2. After Vault: Dynamic Database Credentials
 
-Refresh Vault's database secrets engine:
+Refresh the demo data and Vault configuration:
 
 ```bash
-make vault-init
+make reset
 ```
 
 Start the local worker with Vault-issued database credentials:
 
 ```bash
-make worker-vault
+make worker-vault-db
 ```
 
 Trigger the happy-path order:
 
 ```bash
-make trigger ORDER_ID=ORD-001
+make run-order ORDER_ID=ORD-001
 ```
 
 The worker logs should show generated Postgres usernames, for example:
@@ -129,11 +123,12 @@ v-token-order-...
 
 ### 3. After Kubernetes Auth: Worker Identity
 
-Run the worker inside Kubernetes and let it authenticate to Vault with its ServiceAccount identity:
+Run the worker inside Kubernetes and let it authenticate to Vault with its ServiceAccount identity. Vault setup was already done by `make setup` or `make reset`, so this step only deploys/switches the worker:
 
 ```bash
-make worker-k8s
-make trigger ORDER_ID=ORD-001
+make demo-build-worker
+make worker-k8s-deploy
+make run-order ORDER_ID=ORD-001
 make logs-worker
 ```
 
@@ -151,8 +146,8 @@ The `order-worker` name in this step is the Kubernetes ServiceAccount, Vault aut
 With the normal Kubernetes worker running, trigger the happy-path order:
 
 ```bash
-make worker-k8s
-make trigger ORDER_ID=ORD-001
+make worker-k8s-deploy
+make run-order ORDER_ID=ORD-001
 ```
 
 In Temporal UI, inspect the workflow input and activity inputs. Before Transit, values like these are visible in history:
@@ -168,8 +163,8 @@ tok_demo_visa_4242_sensitive
 Run the Kubernetes worker with the Vault Transit payload codec enabled:
 
 ```bash
-make worker-k8s-transit
-make trigger-transit ORDER_ID=ORD-001
+make worker-transit
+make run-order-transit ORDER_ID=ORD-001
 make logs-worker
 ```
 
@@ -179,26 +174,26 @@ The Transit path uses task queue `orders-tq-transit`, separate from the plaintex
 binary/vault-transit
 ```
 
+The local Transit trigger uses the limited `demo-transit-client-token` token, which can call Transit encrypt/decrypt for the demo key. The Kubernetes worker still authenticates to Vault with Kubernetes auth.
+
 ### 6. Least Privilege + Failure Scenarios
 
-Reset the demo data:
+Refresh the demo data and Vault configuration:
 
 ```bash
-make db-init
+make reset
 ```
 
 Run the Kubernetes worker:
 
 ```bash
-make worker-k8s
+make worker-k8s-deploy
 ```
 
 Trigger the three demo orders:
 
 ```bash
-make trigger ORDER_ID=ORD-001
-make trigger ORDER_ID=ORD-002
-make trigger ORDER_ID=ORD-003
+make run-failures
 ```
 
 `ORD-002` and `ORD-003` are expected to fail at the workflow level. They demonstrate business failures, not broken infrastructure.
@@ -214,9 +209,7 @@ ORD-003: PAYMENT_FAILED
 Verify the narrow Vault database roles:
 
 ```bash
-make vault-init
-make vault-test-db-creds
-make logs-worker
+make verify
 ```
 
 `make vault-init` should list only the activity-specific database roles:
@@ -234,24 +227,20 @@ order-validate
 ## Useful Commands
 
 ```bash
-make status
-make vault-init
-make vault-read-db-creds
-make vault-test-db-creds
-make port-forward-temporal
-make port-forward-postgres
-make port-forward-vault
-make port-forward-ui
-make logs-temporal
-make logs-postgres
-make logs-vault
-make worker
-make worker-vault
-make worker-k8s
-make worker-k8s-transit
-make trigger-transit
-make logs-worker
-make db-shell
+make help
+make setup
+make ports
+make reset-data
+make reset
+make worker-static
+make worker-vault-db
+make demo-build-worker
+make worker-k8s-deploy
+make worker-transit
+make run-order ORDER_ID=ORD-001
+make run-order-transit ORDER_ID=ORD-001
+make run-failures
+make verify
 make down
 ```
 
@@ -260,19 +249,20 @@ make down
 Reset only the demo data:
 
 ```bash
-make db-init
+make reset-data
 ```
 
 Rebuild and redeploy the Kubernetes worker:
 
 ```bash
-make worker-k8s
+make demo-build-worker
+make worker-k8s-deploy
 ```
 
 Enable the Transit worker path:
 
 ```bash
-make worker-k8s-transit
+make worker-transit
 ```
 
 Delete the whole local cluster:
@@ -284,13 +274,13 @@ make down
 If a trigger fails with `Connection refused` for `localhost:7233`, start or restart the Temporal port-forward:
 
 ```bash
-make port-forward-temporal
+make ports
 ```
 
 If Temporal UI is not reachable at `http://localhost:8080`, start or restart:
 
 ```bash
-make port-forward-ui
+make ports
 ```
 
 If a port-forward says the port is already allocated, another terminal is probably already forwarding that port. Use the existing terminal, stop the old port-forward with `Ctrl-C`, or change the local port manually.
@@ -298,21 +288,21 @@ If a port-forward says the port is already allocated, another terminal is probab
 If the worker seems to run old code, rebuild and redeploy it:
 
 ```bash
-make worker-k8s
+make demo-build-worker
+make worker-k8s-deploy
 ```
 
 The worker image tag defaults to the current git commit. If you are testing uncommitted code repeatedly, pass an explicit tag:
 
 ```bash
-make worker-k8s WORKER_IMAGE_TAG=demo-test
+make demo-build-worker WORKER_IMAGE_TAG=demo-test
+make worker-k8s-deploy WORKER_IMAGE_TAG=demo-test
 ```
 
 Vault runs in dev mode. If the Vault pod restarts, rerun:
 
 ```bash
-make vault-init
-make vault-init-transit
-make vault-enable-k8s-auth
+make reset
 ```
 
 `ORD-002` and `ORD-003` intentionally fail at the workflow level. They should still leave the expected order statuses in Postgres:
@@ -326,11 +316,7 @@ For a full fresh start:
 
 ```bash
 make down
-make up
-make deploy
-make wait
-make db-init
-make vault-init
+make setup
 ```
 
 ## Current Demo
@@ -376,10 +362,10 @@ The older broad `order-worker` database role has been removed. The `order-worker
 The credential and payload progression is:
 
 ```text
-make worker        -> db_credential_source=static
-make worker-vault  -> db_credential_source=vault
-make worker-k8s    -> db_credential_source=vault, vault_auth_method=kubernetes
-make trigger-transit -> workflow payloads encrypted with Vault Transit
+make worker-static     -> db_credential_source=static
+make worker-vault-db   -> db_credential_source=vault
+make worker-k8s-deploy -> db_credential_source=vault, vault_auth_method=kubernetes
+make run-order-transit -> workflow payloads encrypted with Vault Transit
 ```
 
 In Vault mode, the worker logs generated Postgres usernames such as `v-token-order-...` for token auth and `v-kubernet-order-...` for Kubernetes auth.
@@ -407,7 +393,7 @@ Future scope:
 ```mermaid
 flowchart LR
     subgraph local["Local machine"]
-        trigger["Trigger client\nmake trigger"]
+        trigger["Trigger client\nmake run-order / run-order-transit"]
         browser["Browser\nTemporal UI"]
     end
 
@@ -455,4 +441,4 @@ flowchart TD
 
 ## Notes
 
-This is a local development demo, not a production deployment. Vault still runs in dev mode, and setup scripts still use the root token to configure Vault. The Kubernetes worker runtime uses Vault Kubernetes auth instead of the root token.
+This is a local development demo, not a production deployment. Vault still runs in dev mode, and setup/reset scripts still use the root token to configure Vault. The local Transit trigger uses a limited demo token, and the Kubernetes worker runtime uses Vault Kubernetes auth instead of the root token.
