@@ -2,7 +2,9 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: local demo complete and tested. Blog/publishing polish is in progress.
+Blog post: [Securing Temporal Workflows with HashiCorp Vault](https://kaparora.com/tech/securing-temporal-workflows-with-hashicorp-vault)
+
+Current status: local demo complete and tested. Blog post published.
 
 The demo now shows the main Vault security layers:
 
