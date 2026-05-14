@@ -2,7 +2,7 @@
 
 Local-first reference demo showing how Temporal workflows can use Vault on Kubernetes for workload identity, dynamic database credentials, and payload protection.
 
-Current status: Milestone 6 polish is in progress.
+Current status: local demo complete and tested. Blog/publishing polish is in progress.
 
 The demo now shows the main Vault security layers:
 
@@ -29,6 +29,8 @@ The full demo arc is:
 - [Milestone 4: Vault Transit Payload Encryption](docs/milestone-4.md)
 - [Milestone 5: Least Privilege + Failure Scenarios](docs/milestone-5.md)
 - [Blog outline](docs/blog-outline.md)
+- [Blog draft](docs/blog-draft.md)
+- [Blog diagrams](docs/blog-diagrams.md)
 
 ## Prerequisites
 
@@ -66,7 +68,7 @@ Keep these port-forwards open for local workers and browser inspection:
 make ports
 ```
 
-For video creation or live presentation, use the terminal-based numbered scripts in [scripts/demo](scripts/demo/README.md). They print the demo intent, run the underlying `make` commands, and call out what to show in Temporal UI, Vault, logs, and Postgres. The final script, `14_T1_cleanup.sh`, deletes the local kind cluster.
+For a guided walkthrough, use the terminal-based numbered scripts in [scripts/demo](scripts/demo/README.md). They print the demo intent, run the underlying `make` commands, and call out what to show in Temporal UI, Vault, logs, and Postgres. The final script, `14_T1_cleanup.sh`, deletes the local kind cluster.
 
 The script flow uses three terminals:
 

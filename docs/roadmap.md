@@ -124,11 +124,9 @@ Outcome:
 
 Details: [Milestone 5](milestone-5.md)
 
-## Planned
-
 ### Milestone 6: Polish
 
-Status: in progress.
+Status: complete.
 
 Goal: make the project easy to demo, reset, and explain.
 
@@ -141,18 +139,31 @@ Expected outcome:
 - Troubleshooting notes.
 - Clear production caveats.
 
-### Milestone 7: Blog + Video
+## Planned
 
-Goal: turn the completed local demo into a public walkthrough.
+### Milestone 7: Blog + Publishing Polish
+
+Goal: turn the completed local demo into a public article and publishable repository.
 
 Expected outcome:
 
-- Publish a blog post with the architecture, demo narrative, commands, and caveats.
-- Record a video walkthrough showing the demo in Temporal UI, Vault UI, worker logs, and Postgres.
+- Publish a concept-first blog post that explains the business problem, security challenges, architecture pattern, and production caveats.
+- Keep the README as the runnable demo guide rather than duplicating it in the blog.
+- Include diagrams and screenshots that support the security story.
 - Explain why this topic matters and what production hardening remains.
 - Link to the GitHub repository.
 
-Working outline: [Blog outline](blog-outline.md)
+Working draft: [Blog draft](blog-draft.md)
+
+### Future: Demo Video
+
+Goal: record a video walkthrough once the blog and repository are ready.
+
+Expected outcome:
+
+- Show the demo in Temporal UI, Vault UI, worker logs, and Postgres.
+- Use the numbered demo scripts as the narration backbone.
+- Keep the video focused on the same security story as the blog.
 
 ## Future Scope
 
