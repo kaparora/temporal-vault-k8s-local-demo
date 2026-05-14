@@ -4,6 +4,8 @@ Dynamic database credentials, Kubernetes workload identity, encrypted workflow p
 
 ![Temporal and Vault security architecture concept](temporal-vault-chatgpt.png)
 
+_Temporal keeps the business process durable. Vault surrounds the worker path with identity, credential, policy, and encryption controls._
+
 Temporal is very good at making business processes durable. That durability is exactly why many teams adopt it: workflows survive worker restarts, activities can retry, failures are recorded, and the full execution history remains available for debugging and recovery.
 
 But once a workflow becomes durable, the security model changes.
@@ -52,6 +54,8 @@ There are four security problems I wanted the demo to make visible.
 
 ![Problem diagram showing one worker with too much trust](diagram-1.png)
 
+_The baseline risk: one broad worker runtime, long-lived database credentials, and sensitive data visible in durable workflow history._
+
 First, static database credentials are too broad and too long-lived. If a worker has a fixed Postgres username and password, that credential can leak, be reused, or remain valid longer than it should.
 
 Second, Vault itself has a Secret Zero problem. If the worker uses Vault to get credentials, how does the worker safely authenticate to Vault? Putting a static Vault token into the worker environment is only a partial improvement.
@@ -74,6 +78,8 @@ That means an activity is a useful unit for least privilege.
 
 ![Least privilege diagram showing activities mapped to Vault database roles](diagram-3.png)
 
+_Temporal activities create natural boundaries where database access can be narrowed to the specific business operation._
+
 In the local demo, I used one common codebase and one worker implementation, but the worker requests different Vault database roles for different activities:
 
 ```text
@@ -89,6 +95,8 @@ That already improves the model. The database credential used by an activity is 
 
 ![Vault database roles scoped per workflow activity](vault-db-roles-per-activity.png)
 
+_Vault database roles can mirror the workflow's activity model instead of giving every step the same broad credential._
+
 In a more production-shaped deployment, the same idea can go further. Activities can be split across task queues and worker deployments. Each deployment can run the same codebase but use a different Kubernetes ServiceAccount. Vault can then map each ServiceAccount identity to the exact policies and database roles that worker is allowed to use.
 
 That is the game changer:
@@ -102,6 +110,8 @@ Temporal gives the business process structure. Kubernetes gives the workload ide
 The pattern looks like this:
 
 ![Solution diagram showing Temporal orchestration and Vault security controls](diagram-2.png)
+
+_Temporal schedules and records the workflow. Vault handles workload identity, dynamic database credentials, and payload encryption._
 
 ```text
 Temporal workflow
@@ -117,6 +127,8 @@ There are three Vault integrations doing different jobs.
 Vault database secrets engine issues short-lived Postgres credentials. The worker does not need a long-lived database password. Credentials can be leased, rotated, and revoked.
 
 ![Worker logs showing Vault-issued dynamic database credentials](dynamic-db-credentials.png)
+
+_Worker logs show Vault-issued Postgres usernames, proving the worker is using generated credentials instead of a static password._
 
 Vault Kubernetes auth lets the worker prove its identity using its Kubernetes ServiceAccount. The worker no longer needs a static Vault root token or manually distributed Vault token.
 
@@ -143,7 +155,11 @@ In the demo, the order input includes fields such as customer email, shipping ad
 
 ![Temporal UI before Transit showing sensitive workflow payload fields](temporal-ui-before-transit.png)
 
+_Before Transit, sensitive order data can appear directly in workflow and activity payloads._
+
 ![Temporal UI after Transit showing encrypted payload encoding](temporal-ui-after-transit.png)
+
+_After Transit, Temporal stores encoded encrypted payloads instead of plain JSON values._
 
 Vault Transit gives us a clean separation of responsibility:
 
