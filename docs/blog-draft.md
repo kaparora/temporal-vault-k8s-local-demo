@@ -1,4 +1,6 @@
-# Securing Temporal Workflows with Vault
+# Securing Temporal Workflows with HashiCorp Vault
+
+Dynamic database credentials, Kubernetes workload identity, encrypted workflow payloads, and least-privilege activities.
 
 ![Temporal and Vault security architecture concept](temporal-vault-chatgpt.png)
 
